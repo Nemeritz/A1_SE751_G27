@@ -104,3 +104,9 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+
+# Custom
+src/main/**/*.java
+!lib/**/*.jar
+
