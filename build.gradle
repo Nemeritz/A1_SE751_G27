@@ -36,7 +36,18 @@ repositories {
     jcenter()
 }
 
+sourceSets {
+    main.java.srcDirs = ['build/tmp/src']
+}
+
+task ptClean << {
+    fileTree("src/pt").matching{ include "**/*.ptjava"}.each{ aFile ->
+        file(aFile.getPath().replaceAll(".ptjava\$", ".java")).delete()
+    }
+}
+
 task ptTranspile << {
+    println "Transpiling PTJava files..."
     // Transpile with ParaTaskParser
 	fileTree("src/pt").matching{ include "**/*.ptjava"}.each{ aFile ->
 		javaexec {
@@ -46,32 +57,42 @@ task ptTranspile << {
 		}
 	}
 
+    println "Copying PTJava output to compile directory..."
     // Copy the java source files
     copy {
         from("src/pt") {
             include "**/*.java"
         }
-        into "src/main"
+
+        into "build/tmp/src"
 
         includeEmptyDirs = false
     }
+}
 
-    
-    delete fileTree("src/pt") {
-        include "**/*.java"
+task srcCopy << {
+    println "Copying source files to compile directory... (Overwrites .ptjava)"
+
+    copy {
+        from("src/main") {
+            include "**/*.java"
+        }
+
+        into "build/tmp/src"
+
+        includeEmptyDirs = false
     }
 }
 
-build.dependsOn ptTranspile
+// srcCopy.dependsOn ptTranspile
 
-clean {
-    delete fileTree("src/main") { include '**/*.java' }
-}
+srcCopy.mustRunAfter ptTranspile
 
-// task ptClean << {
-//     fileTree("src").matching{ include "**/*.ptjava"}.each{ aFile ->
-//         file(aFile.getPath().replaceAll(".ptjava\$", ".java")).delete()
-//     }
-// }
+ptClean.mustRunAfter ptTranspile
 
-// clean.dependsOn ptClean
+ptTranspile.finalizedBy ptClean
+
+compileJava.dependsOn ptTranspile
+compileJava.dependsOn srcCopy
+
+clean.dependsOn ptClean
