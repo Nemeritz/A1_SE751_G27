@@ -107,6 +107,6 @@ Temporary Items
 
 
 # Custom
-src/main/**/*.java
+src/pt/**/*.java
 !lib/**/*.jar
 
