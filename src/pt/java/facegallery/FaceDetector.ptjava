@@ -1,0 +1,7 @@
+package facegallery;
+
+public class FaceDetector {
+    public FaceDetector() {
+
+    }
+}
