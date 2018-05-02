@@ -15,7 +15,7 @@ plugins {
 }
 
 // Define the main class for the application
-mainClassName = 'ParallelFaceDetectionGallery'
+mainClassName = 'FaceGallery'
 
 def ptTools = files('lib/PTRuntime-1.0.0.jar')
 
