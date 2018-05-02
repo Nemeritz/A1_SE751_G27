@@ -23,6 +23,8 @@ dependencies {
     // This dependency is found on compile classpath of this component and consumers.
     compile 'com.google.guava:guava:23.0'
 
+    compile 'com.google.cloud:google-cloud-vision:1.26.0'
+
     compile ptTools
 
     // Use JUnit test framework
@@ -37,7 +39,7 @@ repositories {
 }
 
 sourceSets {
-    main.java.srcDirs = ['build/tmp/src']
+    main.java.srcDirs = ['build/tmp/compileSrc']
 }
 
 task ptClean << {
@@ -64,13 +66,13 @@ task ptTranspile << {
             include "**/*.java"
         }
 
-        into "build/tmp/src"
+        into "build/tmp/compileSrc"
 
         includeEmptyDirs = false
     }
 }
 
-task srcCopy << {
+task compileSrcCopy << {
     println "Copying source files to compile directory... (Overwrites .ptjava)"
 
     copy {
@@ -78,21 +80,30 @@ task srcCopy << {
             include "**/*.java"
         }
 
-        into "build/tmp/src"
+        into "build/tmp/compileSrc"
 
         includeEmptyDirs = false
     }
 }
 
+task compileSrcClean << {
+    println "Clearing temp src files..."
+
+    delete "build/tmp/compileSrcsrc"
+}
+
 // srcCopy.dependsOn ptTranspile
 
-srcCopy.mustRunAfter ptTranspile
+compileSrcCopy.mustRunAfter compileSrcClean
+compileSrcCopy.mustRunAfter ptTranspile
 
 ptClean.mustRunAfter ptTranspile
 
+ptTranspile.mustRunAfter compileSrcClean
 ptTranspile.finalizedBy ptClean
 
+compileJava.dependsOn compileSrcClean
 compileJava.dependsOn ptTranspile
-compileJava.dependsOn srcCopy
+compileJava.dependsOn compileSrcCopy
 
 clean.dependsOn ptClean

@@ -1,4 +1,6 @@
-public class HelloWorld {
+package facegallery;
+
+public class FaceGallery {
 	
 	private void notifyFunc() {
 		System.out.println("in notifyFunc");
@@ -16,7 +18,7 @@ public class HelloWorld {
 		
 		System.out.println("(3)");
 		
-		HelloWorld hw = new HelloWorld();
+		FaceGallery hw = new FaceGallery();
 		
 		TaskIDGroup id2 = multi_hello() notify(hw::notifyFunc());
 		
@@ -26,7 +28,7 @@ public class HelloWorld {
 		
 		System.out.println("(5)");
 		
-		TaskID id4 = new HelloWorld().oneoff_hello2();
+		TaskID id4 = new FaceGallery().oneoff_hello2();
 		
 		System.out.println("(6)");
 		
