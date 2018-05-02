@@ -1,7 +1,29 @@
 package facegallery;
 
+import facegallery.utils.CloudVision;
+
+import java.lang.System;
+import java.io.IOException;
+import com.google.api.gax.rpc.ApiException;
+
 public class FaceDetector {
     public FaceDetector() {
 
+    }
+
+    public void detectSequential(List<String> fileList) {
+        for (String filePath : fileList) {
+            try {
+                CloudVision.detectFaces(filePath, System.out);
+            } catch (IOException e) {
+                System.out.println(String.format("IO exception on %s", filePath));
+            } 
+            catch (ApiException e) {
+                System.out.println(String.format("API exception on %s: %s", filePath, e.getStatusCode().getTransportCode().toString()));
+            }
+            catch (Exception e) {
+                System.out.println(String.format("Exception on %s", filePath));
+            }
+        }
     }
 }
