@@ -15,7 +15,7 @@ plugins {
 }
 
 // Define the main class for the application
-mainClassName = 'FaceGallery'
+mainClassName = 'facegallery.FaceGallery'
 
 def ptTools = files('lib/PTRuntime-1.0.0.jar')
 
@@ -43,7 +43,7 @@ sourceSets {
 }
 
 task ptClean << {
-    fileTree("src/pt").matching{ include "**/*.ptjava"}.each{ aFile ->
+    fileTree("src/pt/java").matching{ include "**/*.ptjava"}.each{ aFile ->
         file(aFile.getPath().replaceAll(".ptjava\$", ".java")).delete()
     }
 }
@@ -51,7 +51,7 @@ task ptClean << {
 task ptTranspile << {
     println "Transpiling PTJava files..."
     // Transpile with ParaTaskParser
-	fileTree("src/pt").matching{ include "**/*.ptjava"}.each{ aFile ->
+	fileTree("src/pt/java").matching{ include "**/*.ptjava"}.each{ aFile ->
 		javaexec {
 		    classpath ptTools
             main 'pt.compiler.ParaTaskParser'
@@ -62,7 +62,7 @@ task ptTranspile << {
     println "Copying PTJava output to compile directory..."
     // Copy the java source files
     copy {
-        from("src/pt") {
+        from("src/pt/java") {
             include "**/*.java"
         }
 
@@ -76,7 +76,7 @@ task compileSrcCopy << {
     println "Copying source files to compile directory... (Overwrites .ptjava)"
 
     copy {
-        from("src/main") {
+        from("src/main/java") {
             include "**/*.java"
         }
 
