@@ -1,5 +1,14 @@
 package facegallery;
 
+import facegallery.utils.ByteArray;
+
+import java.io.IOException;
+import java.util.Optional;
+import java.util.List;
+import java.util.ArrayList;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+
 public class FaceGallery {
 	
 	private void notifyFunc() {
@@ -8,9 +17,34 @@ public class FaceGallery {
 	
 	public static void main(String[] args) {
 		FaceDetector fd = new FaceDetector();
-		ArrayList<String> fileList = new ArrayList<String>();
-		fileList.add("C:\\Users\\lichk\\OneDrive\\Pictures\\Games\\Assassins Creed\\uPlay_PC_Wallpaper2_1680x1050.jpg");
-		fd.detectSequential(fileList);
+		ArrayList<ByteArray> fileBytes = new ArrayList<ByteArray>();
+		
+		try {
+			fileBytes.add(
+						new ByteArray(
+								Files.readAllBytes(Paths.get("C:\\Users\\lichk\\OneDrive\\Pictures\\Games\\Assassins Creed\\uPlay_PC_Wallpaper2_1680x1050.jpg"))
+						)
+					);
+			fileBytes.add(
+						new ByteArray(
+								Files.readAllBytes(Paths.get("C:\\Users\\lichk\\Documents\\Git\\facedataset\\People\\10comm-decarlo.jpg"))
+						)
+					);
+			fileBytes.add(
+						new ByteArray(
+								Files.readAllBytes(Paths.get("C:\\Users\\lichk\\Documents\\Git\\facedataset\\People\\1198_0_861.jpg"))
+						)
+					);
+			
+			ArrayList<Optional<Boolean>> detections = new ArrayList<Optional<Boolean>>(fileBytes.size());
+			fd.detectSequential(fileBytes, detections);
+			
+			for (Optional<Boolean> detection : detections) {
+				System.out.println(detection.get().toString());
+			}
+		} catch (IOException e) {
+			// TODO: handle exception
+		}
 		
 		// System.out.println("(1)");
 		
