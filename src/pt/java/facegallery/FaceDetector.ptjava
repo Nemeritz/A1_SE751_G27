@@ -1,29 +1,32 @@
 package facegallery;
 
-import facegallery.utils.CloudVision;
+import facegallery.utils.CloudVisionFaceDetector;
+import facegallery.utils.ByteArray;
+
+import java.util.List;
+import java.util.Optional;
 
 import java.lang.System;
-import java.io.IOException;
-import com.google.api.gax.rpc.ApiException;
 
 public class FaceDetector {
     public FaceDetector() {
 
     }
+    
+    private static Optional<Boolean> detect(ByteArray byteArray) {
+    	try {
+            return Optional.of(CloudVisionFaceDetector.imageHasFace(bytes));
+        } catch (Exception e) {
+            System.err.println(e.getLocalizedMessage());
+        } finally {
+        	return Optional.empty();
+		}
+    }
 
-    public void detectSequential(List<String> fileList) {
-        for (String filePath : fileList) {
-            try {
-                CloudVision.detectFaces(filePath, System.out);
-            } catch (IOException e) {
-                System.out.println(String.format("IO exception on %s", filePath));
-            } 
-            catch (ApiException e) {
-                System.out.println(String.format("API exception on %s: %s", filePath, e.getStatusCode().getTransportCode().toString()));
-            }
-            catch (Exception e) {
-                System.out.println(String.format("Exception on %s", filePath));
-            }
+    public void detectSequential(List<ByteArray> fileBytes, List<Optional<Boolean>> detections) {
+    	detections.clear();
+        for (ByteArray bytes : fileBytes) {
+        	detections.add(FaceDetector.detect(bytes));
         }
     }
 }
