@@ -4,6 +4,7 @@ import facegallery.utils.CloudVisionFaceDetector;
 import pt.runtime.TaskIDGroup;
 import facegallery.utils.ByteArray;
 
+            return false;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;

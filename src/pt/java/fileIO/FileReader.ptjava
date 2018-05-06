@@ -1,0 +1,95 @@
+package fileIO;
+
+import facegallery.utils.CloudVisionFaceDetector;
+import pt.runtime.TaskIDGroup;
+import facegallery.utils.ByteArray;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.lang.System;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+public class FileReader {
+
+    private List<AtomicBoolean> finshedReadingSequential;
+    private List<AtomicBoolean> finshedReadingParallel;
+
+    public List<ByteArray> getImagesFilesSequential(File folder) {
+        List<ByteArray> data = new ArrayList();
+        File[] files = folder.listFiles();
+        Path path;
+
+        for (int i = 0; i < files.length; i++) {
+            if (files[i].isFile()) {
+                try {
+                    path = files[i].toPath();
+                    data.add(Files.readAllBytes(path));
+                    finishedReadingSequential.add(true);
+                }
+                catch (IOException ie) {
+                    finishedReadingSequential.add(false);
+                    ie.printStackTrace();
+                }
+            }
+        }
+        return data;
+    }
+
+    public List<AtomicBoolean> getFinishedSequential() {
+        return finishedReadingSequential;
+    }
+
+    public List<AtomicBoolean> getFinishedParallel() {
+        return finishedReadingParallel;
+    }
+
+    IO_TASK private static ByteArray readFileWorker(Path path) {
+    	try {
+            ByteArray newImage = Files.readAllBytes(path);
+            finishedReadingParallel.add(true);
+            return newImage
+        } catch (IOException e) {
+            ie.printStackTrace
+            finshedReadingParallel.add(false);
+            return null;
+        }
+    }
+
+    public static List<AtomicBoolean> createParallelDetectionContainer(int fileBytesSize) {
+    	List<AtomicBoolean> detections = new ArrayList(fileBytesSize);
+    	for (int i = 0; i < fileBytesSize; i++) {
+    		detections.add(new AtomicBoolean(true));
+    	}
+    	return detections;
+    }
+
+    Task public static List<ByteArray> getImagesFilesParallel(File folder) {
+        Path path;
+        List<ByteArray> data = new ArrayList();
+        File[] files = folder.listFiles();
+        TaskIDGroup<Void> readIOTasks = new TaskIDGroup(files.length);
+
+        for (int i = 0; i < files.length; i++) {
+            if (files[i].isFile()) {
+                path = files[i].toPath();
+                readIOTasks.add(readFileWorker(path));
+            }
+        }
+
+        try {
+            readIOTasks.waitTillFinished();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return data;
+    }
+}
