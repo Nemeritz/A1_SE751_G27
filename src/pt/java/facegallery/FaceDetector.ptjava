@@ -8,6 +8,7 @@ import facegallery.utils.ByteArray;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Vector;
 import java.lang.System;
 
 public class FaceDetector {    

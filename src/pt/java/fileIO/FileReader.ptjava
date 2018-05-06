@@ -22,19 +22,20 @@ public class FileReader {
     private List<AtomicBoolean> finishedReadingParallel;
 
     public List<ByteArray> getImagesFilesSequential(File folder) {
-        List<ByteArray> data = new ArrayList<ByteArray>();
         File[] files = folder.listFiles();
+        List<ByteArray> data = new ArrayList<ByteArray>(files.length);
+        finishedReadingSequential = new ArrayList<AtomicBoolean>(files.length);
         Path path;
 
         for (int i = 0; i < files.length; i++) {
             if (files[i].isFile()) {
                 try {
                     path = files[i].toPath();
-                    data.add(new ByteArray(Files.readAllBytes(path)));
-                    this.finishedReadingSequential.add(new AtomicBoolean(true));
+                    data.set(i, new ByteArray(Files.readAllBytes(path)));
+                    this.finishedReadingSequential.set(i, new AtomicBoolean(true));
                 }
                 catch (IOException ie) {
-                    this.finishedReadingSequential.add(new AtomicBoolean(false));
+                    this.finishedReadingSequential.set(i, new AtomicBoolean(false));
                     ie.printStackTrace();
                 }
             }
@@ -72,7 +73,8 @@ public class FileReader {
 
     TASK public List<ByteArray> getImagesFilesParallel(File folder) {
         Path path;
-        List<ByteArray> data = new ArrayList();
+        List<ByteArray> data = new ArrayList(folder.listFiles().length);
+        finishedReadingSequential = new ArrayList<AtomicBoolean>(folder.listFiles().length);
         File[] files = folder.listFiles();
         TaskIDGroup<Void> readIOTasks = new TaskIDGroup(files.length);
 
