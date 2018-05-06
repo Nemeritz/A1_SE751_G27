@@ -1,32 +1,61 @@
 package facegallery;
 
 import facegallery.utils.CloudVisionFaceDetector;
+import pt.runtime.TaskIDGroup;
 import facegallery.utils.ByteArray;
 
 import java.util.List;
-import java.util.Optional;
-
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.lang.System;
 
-public class FaceDetector {
-    public FaceDetector() {
-
-    }
-    
-    private static Optional<Boolean> detect(ByteArray byteArray) {
+public class FaceDetector {    
+    private static boolean detect(ByteArray byteArray) {
     	try {
-            return Optional.of(CloudVisionFaceDetector.imageHasFace(bytes));
+            return CloudVisionFaceDetector.imageHasFace(byteArray);
         } catch (Exception e) {
             System.err.println(e.getLocalizedMessage());
-        } finally {
-        	return Optional.empty();
-		}
+            return false;
+        }
+    }
+    
+    IO_TASK private static void detectWorker(ByteArray byteArray, AtomicBoolean hasFace) {
+    	try {
+            hasFace.set(CloudVisionFaceDetector.imageHasFace(byteArray));
+        } catch (Exception e) {
+            System.err.println(e.getLocalizedMessage());
+            hasFace.set(false);
+        }
     }
 
-    public void detectSequential(List<ByteArray> fileBytes, List<Optional<Boolean>> detections) {
-    	detections.clear();
-        for (ByteArray bytes : fileBytes) {
-        	detections.add(FaceDetector.detect(bytes));
+    public static List<Boolean> detectSequential(List<ByteArray> fileBytes) {
+    	List<Boolean> detections = new ArrayList<Boolean>();
+        for (int i = 0; i < fileBytes.size(); i++) {
+        	detections.add(detect(fileBytes.get(i)));
         }
+        return detections;
+    }
+    
+    public static List<AtomicBoolean> createParallelDetectionContainer(int fileBytesSize) {
+    	List<AtomicBoolean> detections = new ArrayList(fileBytesSize);
+    	for (int i = 0; i < fileBytesSize; i++) {
+    		detections.add(new AtomicBoolean(true));
+    	}
+    	return detections;
+    }
+    
+    TASK public static void detectParallel(List<ByteArray> fileBytes, List<AtomicBoolean> detections) {
+    	TaskIDGroup<Void> detectionTasks = new TaskIDGroup(fileBytes.size());
+    	for (int i = 0; i < fileBytes.size(); i++) {
+    		detectionTasks.add(detectWorker(fileBytes.get(i), detections.get(i)));
+    	}
+
+    	try {
+    		detectionTasks.waitTillFinished();
+		} catch (ExecutionException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
     }
 }

@@ -5,20 +5,14 @@ import com.google.cloud.vision.v1.Image;
 import com.google.cloud.vision.v1.Feature;
 import com.google.cloud.vision.v1.AnnotateImageRequest;
 import com.google.cloud.vision.v1.AnnotateImageResponse;
-import com.google.cloud.vision.v1.BatchAnnotateImagesResponse;
 import com.google.cloud.vision.v1.ImageAnnotatorClient;
-import com.google.common.primitives.Bytes;
 import com.google.cloud.vision.v1.Feature.Type;
-import com.google.cloud.vision.v1.FaceAnnotation;
 
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
