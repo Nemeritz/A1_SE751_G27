@@ -15,13 +15,14 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.lang.System;
 
 public class FileReader {
 
-    private List<AtomicBoolean> finishedReadingSequential;
-    private List<AtomicBoolean> finishedReadingParallel;
+    private static List<AtomicBoolean> finishedReadingSequential;
+    private static List<AtomicBoolean> finishedReadingParallel;
 
-    public List<ByteArray> getImagesFilesSequential(File folder) {
+    public static List<ByteArray> getImagesFilesSequential(File folder) {
         File[] files = folder.listFiles();
         List<ByteArray> data = new ArrayList<ByteArray>(files.length);
         finishedReadingSequential = new ArrayList<AtomicBoolean>(files.length);
@@ -32,10 +33,11 @@ public class FileReader {
                 try {
                     path = files[i].toPath();
                     data.set(i, new ByteArray(Files.readAllBytes(path)));
-                    this.finishedReadingSequential.set(i, new AtomicBoolean(true));
+                    finishedReadingSequential.set(i, new AtomicBoolean(true));
+                    System.out.println(i + " " + path.getFileName());
                 }
                 catch (IOException ie) {
-                    this.finishedReadingSequential.set(i, new AtomicBoolean(false));
+                    finishedReadingSequential.set(i, new AtomicBoolean(false));
                     ie.printStackTrace();
                 }
             }
@@ -51,19 +53,20 @@ public class FileReader {
         return this.finishedReadingParallel;
     }
 
-    IO_TASK private ByteArray readFileWorker(Path path) {
+    IO_TASK private static ByteArray readFileWorker(int index, Path path) {
     	try {
             ByteArray newImage = new ByteArray(Files.readAllBytes(path));
-            this.finishedReadingParallel.add(new AtomicBoolean(true));
+            finishedReadingParallel.set(index, new AtomicBoolean(true));
+            System.out.println(index + " " + path.getFileName());
             return newImage;
         } catch (IOException e) {
             e.printStackTrace();
-            this.finishedReadingParallel.add(new AtomicBoolean(false));
+            finishedReadingParallel.set(index, new AtomicBoolean(false));
             return null;
         }
     }
 
-    public List<AtomicBoolean> createParallelDetectionContainer(int fileBytesSize) {
+    public static List<AtomicBoolean> createParallelDetectionContainer(int fileBytesSize) {
     	List<AtomicBoolean> detections = new ArrayList(fileBytesSize);
     	for (int i = 0; i < fileBytesSize; i++) {
     		detections.add(new AtomicBoolean(true));
@@ -71,7 +74,7 @@ public class FileReader {
     	return detections;
     }
 
-    TASK public List<ByteArray> getImagesFilesParallel(File folder) {
+    TASK public static List<ByteArray> getImagesFilesParallel(File folder) {
         Path path;
         List<ByteArray> data = new ArrayList(folder.listFiles().length);
         finishedReadingSequential = new ArrayList<AtomicBoolean>(folder.listFiles().length);
@@ -81,7 +84,7 @@ public class FileReader {
         for (int i = 0; i < files.length; i++) {
             if (files[i].isFile()) {
                 path = files[i].toPath();
-                readIOTasks.add(readFileWorker(path));
+                readIOTasks.add(readFileWorker(i, path));
             }
         }
 

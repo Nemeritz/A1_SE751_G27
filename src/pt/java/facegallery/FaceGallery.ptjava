@@ -15,8 +15,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class FaceGallery {
 	public static void main(String[] args) {
 //		ParaTask.init();
-		ArrayList<ByteArray> fileBytes = new ArrayList<ByteArray>();		
-		
+		ArrayList<ByteArray> fileBytes = new ArrayList<ByteArray>();
+
 		try {
 			fileBytes.add(
 						new ByteArray(
@@ -36,11 +36,11 @@ public class FaceGallery {
 
 //			List<AtomicBoolean> detections = FaceDetector.createParallelDetectionContainer(fileBytes.size());
 //			TaskID<Void> tId = FaceDetector.detectParallel(fileBytes, detections);
-//			
+//
 //			for (AtomicBoolean detection : detections) {
 //				System.out.println(detection.get());
 //			}
-//			
+//
 //	    	try {
 //	    		tId.waitTillFinished();
 //			} catch (ExecutionException e) {
@@ -48,11 +48,11 @@ public class FaceGallery {
 //			} catch (InterruptedException e) {
 //				e.printStackTrace();
 //			}
-//	
+//
 //			for (AtomicBoolean detection : detections) {
 //				System.out.println(detection.get());
 //			}
-			
+
 			List<Boolean> sequentialDetections = FaceDetector.detectSequential(fileBytes);
 			for (Boolean detection : sequentialDetections) {
 				System.out.println(detection.toString());
