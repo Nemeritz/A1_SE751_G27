@@ -20,6 +20,7 @@ public class FileReader {
 
     private static List<AtomicBoolean> finishedReadingSequential;
     private static List<AtomicBoolean> finishedReadingParallel;
+    private static Boolean finished = false;
 
     public static List<ByteArray> getImagesFilesSequential(File folder) {
         File[] files = folder.listFiles();
@@ -38,11 +39,11 @@ public class FileReader {
                     path = files[i].toPath();
                     data.get(i).setBytes(Files.readAllBytes(path));
                     finishedReadingSequential.get(i).set(true);
-                    System.out.println(i + " success s " + path.getFileName());
+                    //System.out.println(i + " success s " + path.getFileName());
                 }
                 catch (IOException ie) {
                     finishedReadingSequential.get(i).set(false);
-                    System.out.println(i + " fail s ");
+                    //System.out.println(i + " fail s ");
                     ie.printStackTrace();
                 }
             }
@@ -62,16 +63,15 @@ public class FileReader {
     	try {
             dataIn.get(index).setBytes(Files.readAllBytes(path));
             finishedReadingParallel.get(index).set(true);
-            System.out.println(" p: " + index + path.getFileName());
+            //System.out.println(" p: " + index + path.getFileName());
         } catch (IOException e) {
             e.printStackTrace();
             finishedReadingParallel.get(index).set(false);
         }
     }
 
-    TASK public static List<ByteArray> getImagesFilesParallel(File folder) {
+    TASK public static void getImagesFilesParallel(List<ByteArray> data, File folder) {
         Path path;
-        List<ByteArray> data = new ArrayList(folder.listFiles().length);
         finishedReadingParallel = new ArrayList<AtomicBoolean>(folder.listFiles().length);
         File[] files = folder.listFiles();
         TaskIDGroup<Void> readIOTasks = new TaskIDGroup(files.length);
@@ -86,17 +86,26 @@ public class FileReader {
                 path = files[i].toPath();
                 TaskID id = readFileWorker(i, path, data) asyncCatch(IOException fileHandler(TaskID));
                 readIOTasks.add(id);
+                //System.out.println("parallel file read: " + i);
             }
         }
 
         try {
             readIOTasks.waitTillFinished();
+            finished = true;
         } catch (ExecutionException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        return data;
+    }
+
+    private static void finishedBuilding() {
+        finished = true;
+    }
+
+    public static Boolean getFinished() {
+        return finished;
     }
 
     public static void fileHandler(TaskID id) {
