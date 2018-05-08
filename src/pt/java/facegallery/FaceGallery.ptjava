@@ -1,64 +1,36 @@
 package facegallery;
 
+import facegallery.utils.CloudVisionFaceDetector;
 import facegallery.utils.ByteArray;
-import pt.runtime.TaskID;
-
-import java.io.IOException;
-import java.util.Optional;
 
 import java.util.List;
 import java.util.ArrayList;
-import java.nio.file.Paths;
-import java.nio.file.Files;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.lang.System;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class FaceGallery {
 	public static void main(String[] args) {
-//		ParaTask.init();
-		ArrayList<ByteArray> fileBytes = new ArrayList<ByteArray>();
+	    File file = new File("/home/chris/Desktop/A1_SE751_G27/src/Dataset");
+	    System.out.println("entered");
+        FileReader.getImagesFilesSequential(file);
+        try {
+            TaskID id = FileReader.getImagesFilesParallel(file) asyncCatch(RuntimeException myHandler(TaskID));
+        }
+        catch(Exception e) {
 
-		try {
-			fileBytes.add(
-						new ByteArray(
-								Files.readAllBytes(Paths.get("C:\\Users\\lichk\\OneDrive\\Pictures\\Games\\Assassins Creed\\uPlay_PC_Wallpaper2_1680x1050.jpg"))
-						)
-					);
-			fileBytes.add(
-						new ByteArray(
-								Files.readAllBytes(Paths.get("C:\\Users\\lichk\\Documents\\Git\\facedataset\\People\\10comm-decarlo.jpg"))
-						)
-					);
-			fileBytes.add(
-						new ByteArray(
-								Files.readAllBytes(Paths.get("C:\\Users\\lichk\\Documents\\Git\\facedataset\\People\\1198_0_861.jpg"))
-						)
-					);
-
-//			List<AtomicBoolean> detections = FaceDetector.createParallelDetectionContainer(fileBytes.size());
-//			TaskID<Void> tId = FaceDetector.detectParallel(fileBytes, detections);
-//
-//			for (AtomicBoolean detection : detections) {
-//				System.out.println(detection.get());
-//			}
-//
-//	    	try {
-//	    		tId.waitTillFinished();
-//			} catch (ExecutionException e) {
-//				e.printStackTrace();
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
-//
-//			for (AtomicBoolean detection : detections) {
-//				System.out.println(detection.get());
-//			}
-
-			List<Boolean> sequentialDetections = FaceDetector.detectSequential(fileBytes);
-			for (Boolean detection : sequentialDetections) {
-				System.out.println(detection.toString());
-			}
-		} catch (IOException e) {
-			// TODO: handle exception
-		}
+        }
 	}
+
+    public static void myHandler(TaskID id) {
+        //System.out.println(“Task ” + id.getID() + “ threw an exception:”);
+        id.getException().printStackTrace();
+    }
+
 }
