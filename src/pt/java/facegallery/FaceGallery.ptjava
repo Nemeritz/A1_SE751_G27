@@ -2,6 +2,7 @@ package facegallery;
 
 import facegallery.utils.CloudVisionFaceDetector;
 import facegallery.utils.ByteArray;
+import pt.runtime.TaskID;
 
 import java.util.List;
 import java.util.ArrayList;
