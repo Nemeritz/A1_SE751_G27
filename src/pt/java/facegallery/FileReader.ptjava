@@ -62,7 +62,7 @@ public class FileReader {
     	try {
             dataIn.get(index).setBytes(Files.readAllBytes(path));
             finishedReadingParallel.get(index).set(true);
-            System.out.println(index + " " + path.getFileName());
+            System.out.println(" p: " + index + path.getFileName());
         } catch (IOException e) {
             e.printStackTrace();
             finishedReadingParallel.get(index).set(false);
