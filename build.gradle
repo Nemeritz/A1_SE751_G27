@@ -17,7 +17,7 @@ plugins {
 // Define the main class for the application
 mainClassName = 'facegallery.FaceGallery'
 
-def ptTools = files('lib/PTRuntime-1.0.0.jar')
+def ptTools = files('lib/@PT-1.5.2.jar')
 
 dependencies {
     // This dependency is found on compile classpath of this component and consumers.
@@ -37,73 +37,3 @@ repositories {
     // You can declare any Maven/Ivy/file repository here.
     jcenter()
 }
-
-sourceSets {
-    main.java.srcDirs = ['build/tmp/compileSrc']
-}
-
-task ptClean << {
-    fileTree("src/pt/java").matching{ include "**/*.ptjava"}.each{ aFile ->
-        file(aFile.getPath().replaceAll(".ptjava\$", ".java")).delete()
-    }
-}
-
-task ptTranspile << {
-    println "Transpiling PTJava files..."
-    // Transpile with ParaTaskParser
-	fileTree("src/pt/java").matching{ include "**/*.ptjava"}.each{ aFile ->
-		javaexec {
-		    classpath ptTools
-            main 'pt.compiler.ParaTaskParser'
-		    args aFile.absolutePath
-		}
-	}
-
-    println "Copying PTJava output to compile directory..."
-    // Copy the java source files
-    copy {
-        from("src/pt/java") {
-            include "**/*.java"
-        }
-
-        into "build/tmp/compileSrc"
-
-        includeEmptyDirs = false
-    }
-}
-
-task compileSrcCopy << {
-    println "Copying source files to compile directory... (Overwrites .ptjava)"
-
-    copy {
-        from("src/main/java") {
-            include "**/*.java"
-        }
-
-        into "build/tmp/compileSrc"
-
-        includeEmptyDirs = false
-    }
-}
-
-task compileSrcClean << {
-    println "Clearing temp src files..."
-
-    delete "build/tmp/compileSrcsrc"
-}
-
-// srcCopy.dependsOn ptTranspile
-
-compileSrcCopy.mustRunAfter compileSrcClean
-compileSrcCopy.mustRunAfter ptTranspile
-
-ptClean.mustRunAfter ptTranspile
-
-ptTranspile.mustRunAfter compileSrcClean
-ptTranspile.finalizedBy ptClean
-
-compileJava.dependsOn compileSrcClean
-compileJava.dependsOn ptTranspile
-compileJava.dependsOn compileSrcCopy
-
-clean.dependsOn ptClean
