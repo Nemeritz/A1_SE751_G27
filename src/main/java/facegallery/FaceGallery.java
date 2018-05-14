@@ -1,10 +1,9 @@
 package facegallery;
 
+import apt.annotations.Future;
 import facegallery.utils.ByteArray;
-import pt.runtime.TaskID;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -14,7 +13,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FaceGallery {
 	public static void main(String[] args) {
-//		ParaTask.init();
 		ArrayList<ByteArray> fileBytes = new ArrayList<ByteArray>();		
 		
 		try {
@@ -33,32 +31,25 @@ public class FaceGallery {
 								Files.readAllBytes(Paths.get("C:\\Users\\lichk\\Documents\\Git\\facedataset\\People\\1198_0_861.jpg"))
 						)
 					);
+        } catch (IOException e) {
+            // TODO: handle exception
+        }
 
-//			List<AtomicBoolean> detections = FaceDetector.createParallelDetectionContainer(fileBytes.size());
-//			TaskID<Void> tId = FaceDetector.detectParallel(fileBytes, detections);
-//			
-//			for (AtomicBoolean detection : detections) {
-//				System.out.println(detection.get());
-//			}
-//			
-//	    	try {
-//	    		tId.waitTillFinished();
-//			} catch (ExecutionException e) {
-//				e.printStackTrace();
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
-//	
-//			for (AtomicBoolean detection : detections) {
-//				System.out.println(detection.get());
-//			}
-			
-			List<Boolean> sequentialDetections = FaceDetector.detectSequential(fileBytes);
-			for (Boolean detection : sequentialDetections) {
-				System.out.println(detection.toString());
-			}
-		} catch (IOException e) {
-			// TODO: handle exception
-		}
+        List<AtomicBoolean> parallelDetections = FaceDetector.createParallelDetectionContainer(fileBytes.size());
+
+		List<Boolean> sequentialDetections = FaceDetector.detectSequential(fileBytes);
+
+		@Future
+        Void v = FaceDetector.detectParallel(fileBytes, parallelDetections);
+
+        System.out.println("Sequential as follows:");
+        for (Boolean detection : sequentialDetections) {
+            System.out.println(detection.toString());
+        }
+
+        System.out.println("Parallel as follows:");
+        for (AtomicBoolean detection : parallelDetections) {
+            System.out.println(detection.toString());
+        }
 	}
 }
