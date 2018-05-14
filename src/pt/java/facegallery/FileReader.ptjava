@@ -1,0 +1,115 @@
+package facegallery;
+
+import facegallery.utils.CloudVisionFaceDetector;
+import facegallery.utils.ByteArray;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.lang.System;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.lang.System;
+
+public class FileReader {
+
+    private static List<AtomicBoolean> finishedReadingSequential;
+    private static List<AtomicBoolean> finishedReadingParallel;
+    private static Boolean finished = false;
+
+    public static List<ByteArray> getImagesFilesSequential(File folder) {
+        File[] files = folder.listFiles();
+        List<ByteArray> data = new ArrayList<ByteArray>(files.length);
+        finishedReadingSequential = new ArrayList<AtomicBoolean>(files.length);
+        Path path;
+
+        for (int i = 0; i < files.length; i++) {
+            data.add(new ByteArray());
+            finishedReadingSequential.add(new AtomicBoolean(false));
+        }
+
+        for (int i = 0; i < files.length; i++) {
+            if (files[i].isFile()) {
+                try {
+                    path = files[i].toPath();
+                    data.get(i).setBytes(Files.readAllBytes(path));
+                    finishedReadingSequential.get(i).set(true);
+                    //System.out.println(i + " success s " + path.getFileName());
+                }
+                catch (IOException ie) {
+                    finishedReadingSequential.get(i).set(false);
+                    //System.out.println(i + " fail s ");
+                    ie.printStackTrace();
+                }
+            }
+        }
+        return data;
+    }
+
+    public List<AtomicBoolean> getFinishedSequential() {
+        return this.finishedReadingSequential;
+    }
+
+    public List<AtomicBoolean> getFinishedParallel() {
+        return this.finishedReadingParallel;
+    }
+
+    IO_TASK private static void readFileWorker(int index, Path path, List<ByteArray> dataIn) throws IOException {
+    	try {
+            dataIn.get(index).setBytes(Files.readAllBytes(path));
+            finishedReadingParallel.get(index).set(true);
+            //System.out.println(" p: " + index + path.getFileName());
+        } catch (IOException e) {
+            e.printStackTrace();
+            finishedReadingParallel.get(index).set(false);
+        }
+    }
+
+    TASK public static void getImagesFilesParallel(List<ByteArray> data, File folder) {
+        Path path;
+        finishedReadingParallel = new ArrayList<AtomicBoolean>(folder.listFiles().length);
+        File[] files = folder.listFiles();
+        TaskIDGroup<Void> readIOTasks = new TaskIDGroup(files.length);
+
+        for (int i = 0; i < files.length; i++) {
+            data.add(new ByteArray());
+            finishedReadingParallel.add(new AtomicBoolean(false));
+        }
+
+        for (int i = 0; i < files.length; i++) {
+            if (files[i].isFile()) {
+                path = files[i].toPath();
+                TaskID id = readFileWorker(i, path, data) asyncCatch(IOException fileHandler(TaskID));
+                readIOTasks.add(id);
+                //System.out.println("parallel file read: " + i);
+            }
+        }
+
+        try {
+            readIOTasks.waitTillFinished();
+            finished = true;
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void finishedBuilding() {
+        finished = true;
+    }
+
+    public static Boolean getFinished() {
+        return finished;
+    }
+
+    public static void fileHandler(TaskID id) {
+        //System.out.println(“Task ” + id.getID() + “ threw an exception:”);
+        id.getException().printStackTrace();
+    }
+}
