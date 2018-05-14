@@ -3,16 +3,13 @@ package facegallery;
 import apt.annotations.Future;
 import apt.annotations.Task;
 import apt.annotations.TaskInfoType;
-import facegallery.utils.CloudVisionFaceDetector;
-import pt.runtime.TaskIDGroup;
 import facegallery.utils.ByteArray;
+import facegallery.utils.CloudVisionFaceDetector;
 import pu.loopScheduler.*;
 
-import java.lang.management.ThreadInfo;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.lang.System;
 
 public class FaceDetector {    
     private static boolean detect(ByteArray byteArray) {

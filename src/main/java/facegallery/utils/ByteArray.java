@@ -6,9 +6,6 @@ public class ByteArray {
 	public ByteArray(byte[] bytes) {
 		this.bytes = bytes;
 	}
-
-    public ByteArray() {
-    }
 	
 	public byte[] getBytes() {
 		return bytes;
