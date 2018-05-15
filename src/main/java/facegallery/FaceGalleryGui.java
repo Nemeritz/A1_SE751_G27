@@ -7,6 +7,7 @@ import javafx.stage.Stage;
 import java.net.URL;
 import java.nio.file.Paths;
 
+
 public class FaceGalleryGui extends Application {
 
     @Override

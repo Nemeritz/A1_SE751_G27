@@ -16,6 +16,7 @@ import facegallery.utils.MyImageView;
 import java.io.File;
 import java.net.URL;
 import java.util.ResourceBundle;
+import facegallery.FaceGallery;
 
 public class FaceGalleryController implements Initializable {
     @FXML
@@ -30,12 +31,20 @@ public class FaceGalleryController implements Initializable {
     private Button detectButton;
     @FXML
     private void handleButtonAction(Event event) {
-            if(event.getSource()==parallel)
-                System.out.println("Detect");
-            if(event.getSource()==sequential)
+        FaceGallery fg = new FaceGallery();
+            if(event.getSource()==parallel){
+                System.out.println("Parallel");
+                fg.runParallel();
+                
+            }
+            if(event.getSource()==sequential){
                 System.out.println("sequential");
-            if(event.getSource()==detectButton)
+                fg.runSequential();
+            }
+            if(event.getSource()==detectButton){
                 System.out.println("detect faces");
+                fg.runParallelPipeline();
+            }
     }
 
 
