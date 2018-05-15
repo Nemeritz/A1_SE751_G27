@@ -4,6 +4,8 @@ import apt.annotations.Future;
 import apt.annotations.Task;
 import apt.annotations.TaskInfoType;
 import facegallery.utils.ByteArray;
+import facegallery.utils.Parallelized;
+import org.jetbrains.annotations.NotNull;
 import pu.loopScheduler.*;
 
 import java.io.File;
@@ -13,16 +15,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ImageBytesReader {
-    public static List<ByteArray> getImagesFilesSequential(File[] files) {
-        List<ByteArray> fileBytes = new ArrayList<>(files.length);
+public class ImageBytesReader extends Parallelized<Void, ByteArray> {
+    private File[] fileList;
 
-        for (File file : files) {
+    public ImageBytesReader(String folderPath) {
+        super(null);
+        fileList = getImageListFromDir(folderPath);
+    }
+
+    @Override
+    public List<ByteArray> runSequential() {
+        List<ByteArray> fileBytes = new ArrayList<>(fileList.length);
+
+        for (File file : fileList) {
             try {
                 fileBytes.add(new ByteArray(Files.readAllBytes(file.toPath())));
             }
             catch (IOException e) {
-                System.out.println(e.getLocalizedMessage());
+                System.err.println(e.getLocalizedMessage());
                 fileBytes.add(new ByteArray(null));
             }
         }
@@ -30,47 +40,8 @@ public class ImageBytesReader {
         return fileBytes;
     }
 
-    @Task
-    private static Void readFileWorker(File[] fileList, List<ByteArray> fileBytes, List<AtomicBoolean> readyFlags, LoopScheduler scheduler) {
-        LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
-
-        for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
-            try {
-                fileBytes.get(i).setBytes(Files.readAllBytes(fileList[i].toPath()));
-                readyFlags.get(i).set(true);
-            } catch (Exception e) {
-                System.err.println(e.getLocalizedMessage());
-                readyFlags.get(i).set(true);
-            }
-        }
-
-        return null;
-    }
-
-    public static List<ByteArray> createImageBytesContainer(int fileListSize) {
-        ArrayList<ByteArray> containers = new ArrayList<>(fileListSize);
-        for (int i = 0; i < fileListSize; i++) {
-            containers.add(new ByteArray(null));
-        }
-        return containers;
-    }
-
-    public static List<AtomicBoolean> createBytesReadyContainer(int fileListSize) {
-        ArrayList<AtomicBoolean> containers = new ArrayList<>(fileListSize);
-        for (int i = 0; i < fileListSize; i++) {
-            containers.add(new AtomicBoolean(false));
-        }
-        return containers;
-    }
-
-    public static File[] getFileListFromDir(String filePath) {
-        return new File(filePath).listFiles((File dir, String name) -> {
-            String lowerName = name.toLowerCase();
-            return lowerName.endsWith(".jpg") || lowerName.endsWith(".png") || lowerName.endsWith(".gif");
-        });
-    }
-
-    public static Void getImagesFilesParallel(File[] fileList, List<ByteArray> fileBytes, List<AtomicBoolean> readyFlags) {
+    @Override
+    public Void runParallel(List<ByteArray> results, List<AtomicBoolean> ready) {
         LoopScheduler scheduler = LoopSchedulerFactory
                 .createLoopScheduler(
                         0,
@@ -82,7 +53,51 @@ public class ImageBytesReader {
                 );
 
         @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 10)
-        Void v = readFileWorker(fileList, fileBytes, readyFlags, scheduler);
+        Void v = readFileWorker(results, ready, scheduler);
+
+        return null;
+    }
+
+    @Override
+    public List<ByteArray> createResultsContainer() {
+        ArrayList<ByteArray> containers = new ArrayList<>(fileList.length);
+        for (int i = 0; i < fileList.length; i++) {
+            containers.add(new ByteArray(null));
+        }
+        return containers;
+    }
+
+    @Override
+    public List<AtomicBoolean> createReadyContainer() {
+        ArrayList<AtomicBoolean> containers = new ArrayList<>(fileList.length);
+        for (int i = 0; i < fileList.length; i++) {
+            containers.add(new AtomicBoolean(false));
+        }
+        return containers;
+    }
+
+    private File[] getImageListFromDir(String filePath) {
+        return new File(filePath).listFiles((File dir, String name) -> {
+            String lowerName = name.toLowerCase();
+            return lowerName.endsWith(".jpg") || lowerName.endsWith(".png") || lowerName.endsWith(".gif");
+        });
+    }
+
+    @NotNull
+    @Task
+    private Void readFileWorker(List<ByteArray> results, List<AtomicBoolean> ready, LoopScheduler scheduler) {
+        LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
+
+        for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
+            try {
+                results.get(i).setBytes(Files.readAllBytes(fileList[i].toPath()));
+            } catch (Exception e) {
+                System.err.println(e.getLocalizedMessage());
+            } finally {
+                processed.add(i);
+                ready.get(i).set(true);
+            }
+        }
 
         return null;
     }
