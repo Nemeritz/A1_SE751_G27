@@ -104,6 +104,7 @@ public class ImageBytesReader extends Parallelized<Void, ByteArray> {
 
     private Void readFileWorker(List<ByteArray> results, List<AtomicBoolean> ready, LoopScheduler scheduler) {
         LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
+        System.out.println("Report thread: " + Integer.toString(ThreadID.getStaticID()));
 
         for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
             try {

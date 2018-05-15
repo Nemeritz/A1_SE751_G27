@@ -1,5 +1,6 @@
 package facegallery;
 
+import apt.annotations.InitParaTask;
 import facegallery.utils.ByteArray;
 
 import java.io.File;
@@ -10,6 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class FaceGallery {
     public static String DATASET_DIR = "C:\\Users\\lichk\\Documents\\Git\\facedataset";
 
+    @InitParaTask(numberOfThreads = 8)
 	public static void main(String[] args) {
 	    try (Scanner scanner = new Scanner(System.in)) {
             String[] prompt = {
