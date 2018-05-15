@@ -27,6 +27,8 @@ dependencies {
 
     compile ptTools
 
+    compile 'org.jetbrains:annotations:16.0.1'
+
     // Use JUnit test framework
     testCompile 'junit:junit:4.12'
 }
