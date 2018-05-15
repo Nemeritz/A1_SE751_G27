@@ -1,16 +1,9 @@
 package facegallery;
 
-import apt.annotations.Future;
 import facegallery.utils.ByteArray;
 
 import java.io.File;
-import java.io.IOException;
-
-import java.nio.file.Path;
 import java.util.List;
-import java.util.ArrayList;
-import java.nio.file.Paths;
-import java.nio.file.Files;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -58,34 +51,49 @@ public class FaceGallery {
 	}
 
 	public static void runSequential() {
-        ImageBytesReader imageBytesReader =  new ImageBytesReader(DATASET_DIR + File.pathSeparator + "Test");
+        ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR + File.pathSeparator + "Test");
         List<ByteArray> fileBytes = imageBytesReader.runSequential();
 
-        List<Boolean> sequentialDetections = FaceDetector.detectSequential(fileBytes);
+        FaceDetector faceDetector = new FaceDetector(fileBytes);
+        List<AtomicBoolean> detections = faceDetector.runSequential();
 
         System.out.println("Sequential as follows:");
-        for (Boolean detection : sequentialDetections) {
+        for (AtomicBoolean detection : detections) {
             System.out.println(detection.toString());
         }
     }
 
     public static void runParallel() {
-        File[] fileList = ImageBytesReader.getImageListFromDir(DATASET_DIR + File.pathSeparator + "Test");
-        List<ByteArray> fileBytes = ImageBytesReader.createImageBytesContainer(fileList.length);
-        List<AtomicBoolean> bytesReady = ImageBytesReader.createBytesReadyContainer(fileList.length);
-        List<AtomicBoolean> parallelDetections = FaceDetector.createDetectionContainer(fileList.length);
+        ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR + File.pathSeparator + "Test");
+        List<ByteArray> fileBytes = imageBytesReader.createResultsContainer();
+        List<AtomicBoolean> bytesReady = imageBytesReader.createReadyContainer();
 
-        @Future
-        Void v = FaceDetector.detectParallel(fileBytes, parallelDetections);
+        FaceDetector faceDetector = new FaceDetector(fileBytes);
+        List<AtomicBoolean> detections = faceDetector.createResultsContainer();
+        List<AtomicBoolean> detectionsReady = faceDetector.createReadyContainer();
 
-        System.out.println("Parallel as follows:");
-        for (AtomicBoolean detection : parallelDetections) {
-            System.out.println(detection.toString());
+        boolean bytesRead = imageBytesReader.runParallel(fileBytes, bytesReady);
+
+        if (bytesRead) {
+            boolean detectionsDone = faceDetector.runParallel(detections, detectionsReady);
+
+            if (detectionsDone) {
+                System.out.println("Parallel as follows:");
+                for (AtomicBoolean detection : detections) {
+                    System.out.println(detection.toString());
+                }
+            }
         }
     }
 
     public static void runParallelPipeline() {
-        File[] fileList = ImageBytesReader.getImageListFromDir(DATASET_DIR + File.pathSeparator + "Test");
+        ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR + File.pathSeparator + "Test");
+        List<ByteArray> fileBytes = imageBytesReader.createResultsContainer();
+        List<AtomicBoolean> bytesReady = imageBytesReader.createReadyContainer();
+
+        FaceDetector faceDetector = new FaceDetector(fileBytes);
+        List<AtomicBoolean> detections = faceDetector.createResultsContainer();
+        List<AtomicBoolean> detectionsReady = faceDetector.createReadyContainer();
 
     }
 

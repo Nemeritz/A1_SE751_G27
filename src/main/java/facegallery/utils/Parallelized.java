@@ -23,7 +23,7 @@ public abstract class Parallelized<I, R> {
 
     public abstract List<R> runSequential();
 
-    public abstract Void runParallel(List<R> results, List<AtomicBoolean> ready);
+    public abstract boolean runParallel(List<R> results, List<AtomicBoolean> ready);
 
     public abstract List<R> createResultsContainer();
 

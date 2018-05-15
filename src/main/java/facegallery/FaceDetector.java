@@ -53,7 +53,7 @@ public class FaceDetector extends Parallelized<ByteArray, AtomicBoolean> {
     }
 
     @Override
-    public Void runParallel(List<AtomicBoolean> results, List<AtomicBoolean> ready) {
+    public boolean runParallel(List<AtomicBoolean> results, List<AtomicBoolean> ready) {
         LoopScheduler scheduler = LoopSchedulerFactory
                 .createLoopScheduler(
                         0,
@@ -67,7 +67,7 @@ public class FaceDetector extends Parallelized<ByteArray, AtomicBoolean> {
         @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 10)
         Void v = detectWorker(results, ready, scheduler);
 
-        return null;
+        return true;
     }
 
     @Override

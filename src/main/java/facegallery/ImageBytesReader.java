@@ -41,7 +41,7 @@ public class ImageBytesReader extends Parallelized<Void, ByteArray> {
     }
 
     @Override
-    public Void runParallel(List<ByteArray> results, List<AtomicBoolean> ready) {
+    public boolean runParallel(List<ByteArray> results, List<AtomicBoolean> ready) {
         LoopScheduler scheduler = LoopSchedulerFactory
                 .createLoopScheduler(
                         0,
@@ -55,7 +55,7 @@ public class ImageBytesReader extends Parallelized<Void, ByteArray> {
         @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 10)
         Void v = readFileWorker(results, ready, scheduler);
 
-        return null;
+        return true;
     }
 
     @Override
