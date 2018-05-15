@@ -18,6 +18,24 @@ plugins {
 mainClassName = 'facegallery.FaceGallery'
 
 def ptTools = files('lib/@PT-1.5.2.jar')
+def srcDir = 'src/main/java'
+def initPtDir = project.buildDir.toString() + '/tmp/processInitParaTask'
+def futureDir = project.buildDir.toString() + '/tmp/processFuture'
+def guiDir = project.buildDir.toString() + '/tmp/processGui'
+
+sourceSets {
+    main {
+        java {
+            srcDirs srcDir
+        }
+    }
+
+    ptRuntime {
+        java {
+            srcDirs guiDir
+        }
+    }
+}
 
 dependencies {
     // This dependency is found on compile classpath of this component and consumers.
@@ -29,6 +47,14 @@ dependencies {
 
     // Use JUnit test framework
     testCompile 'junit:junit:4.12'
+
+    ptRuntimeCompile 'com.google.guava:guava:23.0'
+
+    ptRuntimeCompile 'com.google.cloud:google-cloud-vision:1.26.0'
+
+    ptRuntimeCompile ptTools
+
+    ptRuntimeCompile sourceSets.main.output
 }
 
 // In this section you declare where to find the dependencies of your project
@@ -38,4 +64,61 @@ repositories {
     jcenter()
 }
 
+task cleanProcessorOutput(type: Delete) {
+    delete initPtDir, futureDir, guiDir
+}
+
+task initPtProcessor(type: JavaExec) {
+    classpath ptTools, sourceSets.main.java.outputDir
+    main 'spoon.Launcher'
+    args '-i', srcDir, '-o', initPtDir, '-p', 'apt.processors.AptInitParaTaskProcessor'
+}
+
+task futureProcessor(type: JavaExec) {
+    classpath ptTools, sourceSets.main.java.outputDir
+    main 'spoon.Launcher'
+    args '-i', initPtDir, '-o', futureDir, '-p', 'apt.processors.AptFutureProcessor'
+}
+
+task guiProcessor(type: JavaExec) {
+    classpath ptTools, sourceSets.main.java.outputDir
+    main 'spoon.Launcher'
+    args '-i', futureDir, '-o', guiDir, '-p', 'apt.processors.AptGuiProcessor'
+}
+
+task processAnnotations(type: Copy) {
+    from sourceSets.ptRuntime.java.outputDir
+    into sourceSets.main.java.outputDir
+}
+
 run.standardInput = System.in
+
+initPtProcessor.mustRunAfter cleanProcessorOutput
+initPtProcessor.mustRunAfter classes
+initPtProcessor.dependsOn classes
+futureProcessor.mustRunAfter initPtProcessor
+futureProcessor.mustRunAfter cleanProcessorOutput
+futureProcessor.dependsOn initPtProcessor
+guiProcessor.mustRunAfter futureProcessor
+guiProcessor.mustRunAfter cleanProcessorOutput
+guiProcessor.dependsOn futureProcessor
+
+processAnnotations.mustRunAfter classes
+processAnnotations.mustRunAfter ptRuntimeClasses
+processAnnotations.dependsOn cleanProcessorOutput
+processAnnotations.dependsOn classes
+processAnnotations.dependsOn initPtProcessor
+processAnnotations.dependsOn futureProcessor
+processAnnotations.dependsOn guiProcessor
+processAnnotations.dependsOn ptRuntimeClasses
+
+classes.finalizedBy processAnnotations
+
+ptRuntimeClasses.mustRunAfter guiProcessor
+ptRuntimeClasses.dependsOn guiProcessor
+
+// task jar(type: Jar, overwrite: true) {
+//     dependsOn ptRuntimeClasses
+//     from sourceSets.ptRuntime.output
+// }
+
