@@ -4,6 +4,7 @@ import apt.annotations.InitParaTask;
 import facegallery.utils.ByteArray;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -54,7 +55,7 @@ public class FaceGallery {
 
 	public static void runSequential() {
         ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR + File.separator + "Test");
-        List<File> fileList = List.of(imageBytesReader.getFileList());
+        List<File> fileList = Arrays.asList(imageBytesReader.getFileList());
         List<ByteArray> fileBytes = imageBytesReader.runSequential();
 
         FaceDetector faceDetector = new FaceDetector(fileBytes);
@@ -68,7 +69,7 @@ public class FaceGallery {
 
     public static void runParallel() {
         ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR + File.separator + "Test");
-        List<File> fileList = List.of(imageBytesReader.getFileList());
+        List<File> fileList = Arrays.asList(imageBytesReader.getFileList());
         List<ByteArray> fileBytes = imageBytesReader.createResultsContainer();
         List<AtomicBoolean> bytesReady = imageBytesReader.createReadyContainer();
 

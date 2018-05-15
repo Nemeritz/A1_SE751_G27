@@ -69,19 +69,19 @@ task cleanProcessorOutput(type: Delete) {
 }
 
 task initPtProcessor(type: JavaExec) {
-    classpath ptTools, sourceSets.main.java.outputDir
+    classpath ptTools, sourceSets.main.java.outputDir, sourceSets.main.compileClasspath
     main 'spoon.Launcher'
     args '-i', srcDir, '-o', initPtDir, '-p', 'apt.processors.AptInitParaTaskProcessor'
 }
 
 task futureProcessor(type: JavaExec) {
-    classpath ptTools, sourceSets.main.java.outputDir
+    classpath ptTools, sourceSets.main.java.outputDir, sourceSets.main.compileClasspath
     main 'spoon.Launcher'
     args '-i', initPtDir, '-o', futureDir, '-p', 'apt.processors.AptFutureProcessor'
 }
 
 task guiProcessor(type: JavaExec) {
-    classpath ptTools, sourceSets.main.java.outputDir
+    classpath ptTools, sourceSets.main.java.outputDir, sourceSets.main.compileClasspath
     main 'spoon.Launcher'
     args '-i', futureDir, '-o', guiDir, '-p', 'apt.processors.AptGuiProcessor'
 }
