@@ -5,7 +5,6 @@ import apt.annotations.Task;
 import apt.annotations.TaskInfoType;
 import facegallery.utils.ByteArray;
 import facegallery.utils.Parallelized;
-import org.jetbrains.annotations.NotNull;
 import pu.loopScheduler.*;
 
 import java.io.File;
@@ -41,6 +40,23 @@ public class ImageBytesReader extends Parallelized<Void, ByteArray> {
     }
 
     @Override
+    public boolean runParallel(List<ByteArray> results) {
+        LoopScheduler scheduler = LoopSchedulerFactory
+                .createLoopScheduler(
+                        0,
+                        fileList.length,
+                        1,
+                        10,
+                        AbstractLoopScheduler.LoopCondition.LessThan,
+                        LoopSchedulerFactory.LoopSchedulingType.Static
+                );
+
+        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 10)
+        Void v = readFileWorker(results, scheduler);
+
+        return true;
+    }
+
     public boolean runParallel(List<ByteArray> results, List<AtomicBoolean> ready) {
         LoopScheduler scheduler = LoopSchedulerFactory
                 .createLoopScheduler(
@@ -67,13 +83,16 @@ public class ImageBytesReader extends Parallelized<Void, ByteArray> {
         return containers;
     }
 
-    @Override
     public List<AtomicBoolean> createReadyContainer() {
         ArrayList<AtomicBoolean> containers = new ArrayList<>(fileList.length);
         for (int i = 0; i < fileList.length; i++) {
             containers.add(new AtomicBoolean(false));
         }
         return containers;
+    }
+
+    public File[] getFileList() {
+        return fileList;
     }
 
     private File[] getImageListFromDir(String filePath) {
@@ -83,9 +102,25 @@ public class ImageBytesReader extends Parallelized<Void, ByteArray> {
         });
     }
 
-    @NotNull
-    @Task
     private Void readFileWorker(List<ByteArray> results, List<AtomicBoolean> ready, LoopScheduler scheduler) {
+        LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
+        System.out.println("Report thread: " + Integer.toString(ThreadID.getStaticID()));
+
+        for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
+            try {
+                results.get(i).setBytes(Files.readAllBytes(fileList[i].toPath()));
+            } catch (Exception e) {
+                System.err.println(e.getLocalizedMessage());
+            } finally {
+                ready.get(i).set(true);
+            }
+        }
+
+        return null;
+    }
+
+    @Task
+    private Void readFileWorker(List<ByteArray> results, LoopScheduler scheduler) {
         LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
 
         for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
@@ -95,7 +130,6 @@ public class ImageBytesReader extends Parallelized<Void, ByteArray> {
                 System.err.println(e.getLocalizedMessage());
             } finally {
                 processed.add(i);
-                ready.get(i).set(true);
             }
         }
 

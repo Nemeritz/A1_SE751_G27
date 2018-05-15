@@ -36,8 +36,22 @@ public class FaceDetector extends Parallelized<ByteArray, AtomicBoolean> {
                 System.err.println(e.getLocalizedMessage());
                 results.get(i).set(false);
             } finally {
-                processed.add(i);
                 ready.get(i).set(true);
+            }
+        }
+        return null;
+    }
+
+    private Void detectWorker(List<AtomicBoolean> results, LoopScheduler scheduler) {
+        LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
+        for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
+            try {
+                results.get(i).set(CloudVisionFaceDetector.imageHasFace(inputs.get(i)));
+            } catch (Exception e) {
+                System.err.println(e.getLocalizedMessage());
+                results.get(i).set(false);
+            } finally {
+                processed.add(i);
             }
         }
         return null;
@@ -53,6 +67,23 @@ public class FaceDetector extends Parallelized<ByteArray, AtomicBoolean> {
     }
 
     @Override
+    public boolean runParallel(List<AtomicBoolean> results) {
+        LoopScheduler scheduler = LoopSchedulerFactory
+                .createLoopScheduler(
+                        0,
+                        results.size(),
+                        1,
+                        10,
+                        AbstractLoopScheduler.LoopCondition.LessThan,
+                        LoopSchedulerFactory.LoopSchedulingType.Static
+                );
+
+        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 10)
+        Void v = detectWorker(results, scheduler);
+
+        return true;
+    }
+
     public boolean runParallel(List<AtomicBoolean> results, List<AtomicBoolean> ready) {
         LoopScheduler scheduler = LoopSchedulerFactory
                 .createLoopScheduler(
@@ -79,7 +110,6 @@ public class FaceDetector extends Parallelized<ByteArray, AtomicBoolean> {
         return detections;
     }
 
-    @Override
     public List<AtomicBoolean> createReadyContainer() {
         List<AtomicBoolean> ready = new ArrayList<>(inputs.size());
         for (int i = 0; i < inputs.size(); i++) {

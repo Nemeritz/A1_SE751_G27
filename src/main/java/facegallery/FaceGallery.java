@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class FaceGallery {
     public static String DATASET_DIR = "/Users/aneesh/Images";
 
+    @InitParaTask(numberOfThreads = 8)
 	public static void main(String[] args) {
         //initialize the GUI
         javafx.application.Application.launch(FaceGalleryGui.class);
@@ -56,6 +57,7 @@ public class FaceGallery {
 	}
 
 	public static void runSequential() {
+        List<File> fileList = List.of(imageBytesReader.getFileList());
         ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR);
         List<ByteArray> fileBytes = imageBytesReader.runSequential();
 
@@ -63,13 +65,14 @@ public class FaceGallery {
         List<AtomicBoolean> detections = faceDetector.runSequential();
 
         System.out.println("Sequential as follows:");
-        for (AtomicBoolean detection : detections) {
-            System.out.println(detection.toString());
+        for (int i = 0; i < detections.size(); i++) {
+            System.out.println(fileList.get(i).getName() + ": " + detections.get(i).toString());
         }
     }
 
     public static void runParallel() {
         ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR);
+        List<File> fileList = List.of(imageBytesReader.getFileList());
         List<ByteArray> fileBytes = imageBytesReader.createResultsContainer();
         List<AtomicBoolean> bytesReady = imageBytesReader.createReadyContainer();
 
@@ -81,11 +84,10 @@ public class FaceGallery {
 
         if (bytesRead) {
             boolean detectionsDone = faceDetector.runParallel(detections, detectionsReady);
-
             if (detectionsDone) {
                 System.out.println("Parallel as follows:");
-                for (AtomicBoolean detection : detections) {
-                    System.out.println(detection.toString());
+                for (int i = 0; i < detections.size(); i++) {
+                    System.out.println(fileList.get(i).getName() + ": " + detections.get(i).toString());
                 }
             }
         }
@@ -99,7 +101,6 @@ public class FaceGallery {
         FaceDetector faceDetector = new FaceDetector(fileBytes);
         List<AtomicBoolean> detections = faceDetector.createResultsContainer();
         List<AtomicBoolean> detectionsReady = faceDetector.createReadyContainer();
-
     }
 
     public static void runGui() {
