@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class FaceGallery {
-    public static String DATASET_DIR = System.getenv("FACEGALLRY_DATASET");
+    public static String DATASET_DIR = "/Users/aneesh/Images";
 
 	public static void main(String[] args) {
         //initialize the GUI
@@ -56,7 +56,7 @@ public class FaceGallery {
 	}
 
 	public static void runSequential() {
-        ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR + File.pathSeparator + "Test");
+        ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR);
         List<ByteArray> fileBytes = imageBytesReader.runSequential();
 
         FaceDetector faceDetector = new FaceDetector(fileBytes);
@@ -69,7 +69,7 @@ public class FaceGallery {
     }
 
     public static void runParallel() {
-        ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR + File.pathSeparator + "Test");
+        ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR);
         List<ByteArray> fileBytes = imageBytesReader.createResultsContainer();
         List<AtomicBoolean> bytesReady = imageBytesReader.createReadyContainer();
 
@@ -92,7 +92,7 @@ public class FaceGallery {
     }
 
     public static void runParallelPipeline() {
-        ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR + File.pathSeparator + "Test");
+        ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR);
         List<ByteArray> fileBytes = imageBytesReader.createResultsContainer();
         List<AtomicBoolean> bytesReady = imageBytesReader.createReadyContainer();
 
