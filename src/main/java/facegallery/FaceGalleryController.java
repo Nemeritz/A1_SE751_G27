@@ -34,16 +34,16 @@ public class FaceGalleryController implements Initializable {
         FaceGallery fg = new FaceGallery();
             if(event.getSource()==parallel){
                 System.out.println("Parallel");
-                fg.runParallel();
+                FaceGallery.runParallel();
                 
             }
             if(event.getSource()==sequential){
                 System.out.println("sequential");
-                fg.runSequential();
+                FaceGallery.runSequential();
             }
             if(event.getSource()==detectButton){
                 System.out.println("detect faces");
-                fg.runParallelPipeline();
+                FaceGallery.runParallelPipeline();
             }
     }
 
