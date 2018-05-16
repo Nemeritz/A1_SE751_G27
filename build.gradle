@@ -119,6 +119,8 @@ classes.finalizedBy processAnnotations
 ptRuntimeClasses.mustRunAfter guiProcessor
 ptRuntimeClasses.dependsOn guiProcessor
 
+compilePtRuntimeJava.mustRunAfter guiProcessor
+
 // task jar(type: Jar, overwrite: true) {
 //     dependsOn ptRuntimeClasses
 //     from sourceSets.ptRuntime.output
