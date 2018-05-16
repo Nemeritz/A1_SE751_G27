@@ -3,6 +3,8 @@ package facegallery;
 import apt.annotations.Future;
 import apt.annotations.Task;
 import apt.annotations.TaskInfoType;
+import apt.annotations.AsyncCatch;
+import apt.annotations.ReductionMethod;
 import facegallery.utils.ByteArray;
 import facegallery.utils.CloudVisionFaceDetector;
 import facegallery.utils.Parallelized;
@@ -28,10 +30,14 @@ public class FaceDetector extends Parallelized<ByteArray, AtomicBoolean> {
 
     @Task
     private Void detectWorker(List<AtomicBoolean> results, List<AtomicBoolean> ready, LoopScheduler scheduler) {
+        System.out.println("Report thread2: " + Integer.toString(ThreadID.getStaticID()));
         LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
+        System.out.println(" ls: " + range.loopStart + " le: " + range.loopEnd + " lstride: " + range.localStride + "i ");
         for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
+
             try {
-                results.get(i).set(CloudVisionFaceDetector.imageHasFace(inputs.get(i)));
+                //results.get(i).set(CloudVisionFaceDetector.imageHasFace(inputs.get(i)));
+                System.out.println("FINSISHED");
             } catch (Exception e) {
                 System.err.println(e.getLocalizedMessage());
                 results.get(i).set(false);
@@ -43,10 +49,14 @@ public class FaceDetector extends Parallelized<ByteArray, AtomicBoolean> {
     }
 
     private Void detectWorker(List<AtomicBoolean> results, LoopScheduler scheduler) {
+        System.out.println("Report thread2: " + Integer.toString(ThreadID.getStaticID()));
         LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
+        System.out.println(" ls: " + range.loopStart + " le: " + range.loopEnd + " lstride: " + range.localStride + "i ");
         for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
+            System.out.println("ls: " + range.loopStart + "le: " + range.loopEnd + "lstride: " + range.localStride + "i " + i);
             try {
-                results.get(i).set(CloudVisionFaceDetector.imageHasFace(inputs.get(i)));
+                //results.get(i).set(CloudVisionFaceDetector.imageHasFace(inputs.get(i)));
+                System.out.println("FINSISHED");
             } catch (Exception e) {
                 System.err.println(e.getLocalizedMessage());
                 results.get(i).set(false);
@@ -78,8 +88,11 @@ public class FaceDetector extends Parallelized<ByteArray, AtomicBoolean> {
                         LoopSchedulerFactory.LoopSchedulingType.Static
                 );
 
-        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 10)
+        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 10/*, reduction="union"*/)
+        @AsyncCatch(throwables={RuntimeException.class}, handlers={"handleRuntimeEx()"})
         Void v = detectWorker(results, scheduler);
+
+        System.out.println(v);
 
         return true;
     }
@@ -95,8 +108,11 @@ public class FaceDetector extends Parallelized<ByteArray, AtomicBoolean> {
                         LoopSchedulerFactory.LoopSchedulingType.Static
                 );
 
-        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 10)
+        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 10/*, reduction="union"*/)
+        @AsyncCatch(throwables={RuntimeException.class}, handlers={"handleRuntimeEx()"})
         Void v = detectWorker(results, ready, scheduler);
+
+        System.out.println(v);
 
         return true;
     }
@@ -116,5 +132,9 @@ public class FaceDetector extends Parallelized<ByteArray, AtomicBoolean> {
             ready.add(new AtomicBoolean(true));
         }
         return ready;
+    }
+
+    private static void handleRuntimeEx() {
+
     }
 }

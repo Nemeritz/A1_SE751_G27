@@ -1,10 +1,13 @@
 package facegallery;
 
+import apt.annotations.AsyncCatch;
 import apt.annotations.Future;
 import apt.annotations.Task;
+import apt.annotations.ReductionMethod;
 import apt.annotations.TaskInfoType;
 import facegallery.utils.ByteArray;
 import facegallery.utils.Parallelized;
+import pu.RedLib.Reduction;
 import pu.loopScheduler.*;
 
 import java.io.File;
@@ -50,9 +53,11 @@ public class ImageBytesReader extends Parallelized<Void, ByteArray> {
                         AbstractLoopScheduler.LoopCondition.LessThan,
                         LoopSchedulerFactory.LoopSchedulingType.Static
                 );
-
-        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 10)
+        @AsyncCatch(throwables={RuntimeException.class}, handlers={"handleRuntimeEx()"})
+        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 10, reduction = "package.CustomRed<K>")
         Void v = readFileWorker(results, scheduler);
+
+        System.out.println(v);
 
         return true;
     }
@@ -68,9 +73,11 @@ public class ImageBytesReader extends Parallelized<Void, ByteArray> {
                         LoopSchedulerFactory.LoopSchedulingType.Static
                 );
 
-        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 10)
+        @AsyncCatch(throwables={RuntimeException.class}, handlers={"handleRuntimeEx()"})
+        @Future(taskType = TaskInfoType.MULTI, taskCount = 10, reduction = "BooleanAND")
         Void v = readFileWorker(results, ready, scheduler);
 
+        System.out.println(v);
         return true;
     }
 
@@ -107,6 +114,7 @@ public class ImageBytesReader extends Parallelized<Void, ByteArray> {
         System.out.println("Report thread: " + Integer.toString(ThreadID.getStaticID()));
 
         for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
+            System.out.println("ZZZ");
             try {
                 results.get(i).setBytes(Files.readAllBytes(fileList[i].toPath()));
             } catch (Exception e) {
@@ -124,6 +132,7 @@ public class ImageBytesReader extends Parallelized<Void, ByteArray> {
         LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
 
         for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
+            System.out.println("ZZZ");
             try {
                 results.get(i).setBytes(Files.readAllBytes(fileList[i].toPath()));
             } catch (Exception e) {
@@ -134,5 +143,10 @@ public class ImageBytesReader extends Parallelized<Void, ByteArray> {
         }
 
         return null;
+    }
+
+
+    private static void handleRuntimeEx() {
+
     }
 }
