@@ -10,7 +10,7 @@ import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FaceGallery {
-    public static String DATASET_DIR = "C:\\Users\\lichk\\Documents\\Git\\facedataset";
+    public static String DATASET_DIR = "/home/chris/Desktop";
 
     @InitParaTask(numberOfThreads = 8)
 	public static void main(String[] args) {
@@ -54,7 +54,7 @@ public class FaceGallery {
 	}
 
 	public static void runSequential() {
-        ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR + File.separator + "Test");
+        ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR + "/" + "Test");
         List<File> fileList = Arrays.asList(imageBytesReader.getFileList());
         List<ByteArray> fileBytes = imageBytesReader.runSequential();
 
@@ -68,7 +68,7 @@ public class FaceGallery {
     }
 
     public static void runParallel() {
-        ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR + File.separator + "Test");
+        ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR + "/" + "Test");
         List<File> fileList = Arrays.asList(imageBytesReader.getFileList());
         List<ByteArray> fileBytes = imageBytesReader.createResultsContainer();
         List<AtomicBoolean> bytesReady = imageBytesReader.createReadyContainer();
@@ -91,7 +91,7 @@ public class FaceGallery {
     }
 
     public static void runParallelPipeline() {
-        ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR + File.separator + "Test");
+        ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR + "/" + "Test");
         List<ByteArray> fileBytes = imageBytesReader.createResultsContainer();
         List<AtomicBoolean> bytesReady = imageBytesReader.createReadyContainer();
 
