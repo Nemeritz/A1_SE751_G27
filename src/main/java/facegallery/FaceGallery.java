@@ -10,7 +10,7 @@ import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FaceGallery {
-    public static String DATASET_DIR = "/home/chris/Desktop";
+    public static String DATASET_DIR = System.getenv("FACEGALLERY_DATASET");
 
     @InitParaTask(numberOfThreads = 8)
 	public static void main(String[] args) {
@@ -21,6 +21,7 @@ public class FaceGallery {
                     "\t2. CLI-Parallel",
                     "\t3. CLI-Parallel-Pipeline",
                     "\t4. GUI",
+                    "\t5. Experiment",
                     "\tAny other key to exit"
             };
 
@@ -46,6 +47,11 @@ public class FaceGallery {
                     break;
                 case 4:
                     runGui();
+                    break;
+                case 5:
+                    Experiments exp = new Experiments();
+                    ByteArray[] imageBytes = exp.loadImagesAsync(DATASET_DIR + "/" + "Test");
+
                     break;
                 default:
                     break;
@@ -73,21 +79,21 @@ public class FaceGallery {
         List<ByteArray> fileBytes = imageBytesReader.createResultsContainer();
         List<AtomicBoolean> bytesReady = imageBytesReader.createReadyContainer();
 
-        FaceDetector faceDetector = new FaceDetector(fileBytes);
-        List<AtomicBoolean> detections = faceDetector.createResultsContainer();
-        List<AtomicBoolean> detectionsReady = faceDetector.createReadyContainer();
+//        FaceDetector faceDetector = new FaceDetector(fileBytes);
+//        List<AtomicBoolean> detections = faceDetector.createResultsContainer();
+//        List<AtomicBoolean> detectionsReady = faceDetector.createReadyContainer();
 
         boolean bytesRead = imageBytesReader.runParallel(fileBytes, bytesReady);
 
-        if (bytesRead) {
-            boolean detectionsDone = faceDetector.runParallel(detections, detectionsReady);
-            if (detectionsDone) {
-                System.out.println("Parallel as follows:");
-                for (int i = 0; i < detections.size(); i++) {
-                    System.out.println(fileList.get(i).getName() + ": " + detections.get(i).toString());
-                }
-            }
-        }
+//        if (bytesRead) {
+//            boolean detectionsDone = faceDetector.runParallel(detections, detectionsReady);
+//            if (detectionsDone) {
+//                System.out.println("Parallel as follows:");
+//                for (int i = 0; i < detections.size(); i++) {
+//                    System.out.println(fileList.get(i).getName() + ": " + detections.get(i).toString());
+//                }
+//            }
+//        }
     }
 
     public static void runParallelPipeline() {
