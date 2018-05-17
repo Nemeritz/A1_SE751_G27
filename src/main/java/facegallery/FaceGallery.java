@@ -1,6 +1,7 @@
 package facegallery;
 
 import apt.annotations.InitParaTask;
+import apt.annotations.TaskScheduingPolicy;
 import facegallery.utils.ByteArray;
 
 import java.io.File;
@@ -10,9 +11,10 @@ import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FaceGallery {
-    public static String DATASET_DIR = System.getenv("FACEGALLERY_DATASET");
+    public static final String DATASET_DIR = System.getenv("FACEGALLERY_DATASET");
+    public static final int PROCESSORS = Runtime.getRuntime().availableProcessors();
 
-    @InitParaTask(numberOfThreads = 8)
+    @InitParaTask(numberOfThreads = 32, schedulingPolicy = TaskScheduingPolicy.WorkStealing)
 	public static void main(String[] args) {
 	    try (Scanner scanner = new Scanner(System.in)) {
             String[] prompt = {
@@ -51,13 +53,17 @@ public class FaceGallery {
                 case 5:
                     Experiments exp = new Experiments();
                     ByteArray[] imageBytes = exp.loadImagesAsync(DATASET_DIR + "/" + "Test");
-
                     break;
                 default:
                     break;
             }
+            System.exit(0);
         }
 	}
+
+	public static int intTask() {
+        return 1;
+    }
 
 	public static void runSequential() {
         ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR + "/" + "Test");

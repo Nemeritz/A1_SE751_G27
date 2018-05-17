@@ -3,7 +3,9 @@ package facegallery;
 import apt.annotations.Future;
 import apt.annotations.TaskInfoType;
 import facegallery.utils.ByteArray;
-import pu.loopScheduler.*;
+import pu.loopScheduler.LoopRange;
+import pu.loopScheduler.LoopScheduler;
+import pu.loopScheduler.ThreadID;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -18,33 +20,30 @@ public class Experiments {
 
     public ByteArray[] loadImagesAsync(String filePath) {
         File[] fileList = getImageListFromDir(filePath);
+
+        @Future(taskType = TaskInfoType.INTERACTIVE)
         ByteArray[] imageBytes = new ByteArray[fileList.length];
-
-        if (fileList.length > 0) {
-            LoopScheduler scheduler = LoopSchedulerFactory
-                    .createLoopScheduler(
-                            0,
-                            fileList.length,
-                            1,
-                            8,
-                            AbstractLoopScheduler.LoopCondition.LessThan,
-                            LoopSchedulerFactory.LoopSchedulingType.Static
-                    );
-
-            @Future(taskType = TaskInfoType.MULTI, taskCount = 8, reduction = "AND")
-            Boolean v = loadImagesWorker(fileList, imageBytes, scheduler);
-            System.out.println(v);
-            for (int i = 0; i < imageBytes.length; i++) {
-                System.out.println(Integer.toString(i) + ". " + fileList[i].toString() + ": " + Boolean.toString(imageBytes[i] != null));
-            }
+        for (int i = 0; i < imageBytes.length; i++) {
+            imageBytes[i] = worker(fileList[i]);
         }
-
+        for (int i = 0; i < imageBytes.length; i++) {
+            System.out.println(Integer.toString(i) + ". " + fileList[i].toString() + ": " + Boolean.toString(imageBytes[i] != null));
+        }
         return imageBytes;
+    }
+
+    public ByteArray worker(File file) {
+        try {
+            return new ByteArray(Files.readAllBytes(file.toPath()));
+        } catch (Exception e) {
+            return new ByteArray(null);
+        }
     }
 
     public Boolean loadImagesWorker(File[] fileList, ByteArray[] imageBytes, LoopScheduler scheduler) {
 
         LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
+        System.out.println(String.format("Thread %d: %d, %d, %d", ThreadID.getStaticID(), range.loopStart, range.loopEnd, range.localStride));
 
         for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
             try {
