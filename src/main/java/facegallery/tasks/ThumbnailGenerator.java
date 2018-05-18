@@ -1,43 +1,49 @@
-package facegallery;
+package facegallery.tasks;
 
 import apt.annotations.Future;
 import apt.annotations.Task;
 import apt.annotations.TaskInfoType;
+import facegallery.utils.ByteArray;
 import pu.loopScheduler.*;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.RescaleOp;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class ImageRescaler {
-    private BufferedImage[] images;
-    private BufferedImage[] rescaled;
-    private RescaleOp rescaleOp;
+public class ThumbnailGenerator {
+    private ByteArray[] imageBytes;
+    private BufferedImage[] resized;
+    private int targetWidth;
 
-    public ImageRescaler(BufferedImage[] images, RescaleOp rescaleOp) {
-        rescaled = new BufferedImage[images.length];
+    public ThumbnailGenerator(ByteArray[] imageBytes, int targetWidth) {
+        resized = new BufferedImage[imageBytes.length];
+        this.imageBytes = imageBytes;
+        this.targetWidth = targetWidth;
     }
 
-    public BufferedImage[] getImages() {
-        return images;
+    public ByteArray[] getImageBytes() {
+        return imageBytes;
     }
 
-    public BufferedImage[] getRescaled() {
-        return rescaled;
+    public BufferedImage[] getResized() {
+        return resized;
     }
 
     public BufferedImage[] run() {
-        for (int i = 0; i < images.length; i++) {
-            if (images[i] != null) {
-                images[i] = rescale(images[i]);
+        for (int i = 0; i < imageBytes.length; i++) {
+            if (imageBytes[i] != null) {
+                resized[i] = resize(imageBytes[i]);
             }
             else {
-                images[i] = null;
+                resized[i] = null;
             }
         }
 
-        return rescaled;
+        return resized;
     }
 
     public BlockingQueue<Integer> runAsync() {
@@ -46,7 +52,7 @@ public class ImageRescaler {
         LoopScheduler scheduler = LoopSchedulerFactory
                 .createLoopScheduler(
                         0,
-                        images.length,
+                        imageBytes.length,
                         1,
                         2,
                         AbstractLoopScheduler.LoopCondition.LessThan,
@@ -63,7 +69,7 @@ public class ImageRescaler {
         LoopScheduler scheduler = LoopSchedulerFactory
                 .createLoopScheduler(
                         0,
-                        images.length,
+                        imageBytes.length,
                         1,
                         2,
                         AbstractLoopScheduler.LoopCondition.LessThan,
@@ -80,7 +86,7 @@ public class ImageRescaler {
         LoopScheduler scheduler = LoopSchedulerFactory
                 .createLoopScheduler(
                         0,
-                        images.length,
+                        imageBytes.length,
                         1,
                         2,
                         AbstractLoopScheduler.LoopCondition.LessThan,
@@ -96,7 +102,7 @@ public class ImageRescaler {
         LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
 
         for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
-            rescaled[i] = rescale(images[i]);
+            resized[i] = resize(imageBytes[i]);
         }
 
         return true;
@@ -107,7 +113,7 @@ public class ImageRescaler {
         LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
 
         for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
-            rescaled[i] = rescale(images[i]);
+            resized[i] = resize(imageBytes[i]);
             readyQueue.offer(i);
         }
 
@@ -121,7 +127,7 @@ public class ImageRescaler {
         for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
             try {
                 Integer nextIndex = inputReady.take();
-                rescaled[nextIndex] = rescale(images[nextIndex]);
+                resized[nextIndex] = resize(imageBytes[nextIndex]);
                 outputReady.offer(nextIndex);
             } catch (InterruptedException e) {
                 e.printStackTrace(System.err);
@@ -131,12 +137,32 @@ public class ImageRescaler {
         return true;
     }
 
-    private BufferedImage rescale(BufferedImage image) {
-        if (image != null) {
-            BufferedImage dstImage = null;
-            dstImage = rescaleOp.filter(image, null);
+    private BufferedImage resize(ByteArray byteArray) {
+        BufferedImage inputImage;
+        ByteArrayInputStream bais = new ByteArrayInputStream(byteArray.getBytes());
+        try {
+            inputImage = ImageIO.read(bais);
+        } catch (IOException e) {
+            e.printStackTrace(System.err);
+            inputImage = null;
+        }
 
-            return dstImage;
+        if (inputImage != null) {
+            double aspectRatio = (double)inputImage.getWidth(null)/(double) inputImage.getHeight(null);
+            int targetHeight = (int)(targetWidth / aspectRatio);
+
+            BufferedImage bufferedImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphics2D = bufferedImage.createGraphics();
+            graphics2D.setComposite(AlphaComposite.Src);
+
+            //below three lines are for RenderingHints for better image quality at cost of higher processing time
+            graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            graphics2D.setRenderingHint(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY);
+            graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+
+            graphics2D.drawImage(inputImage, 0, 0, targetWidth, targetHeight, null);
+            graphics2D.dispose();
+            return bufferedImage;
         }
 
         return null;

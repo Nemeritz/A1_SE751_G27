@@ -3,6 +3,8 @@ package facegallery;
 import apt.annotations.InitParaTask;
 import apt.annotations.TaskScheduingPolicy;
 import facegallery.gui.FaceGalleryGui;
+import facegallery.tasks.FaceDetector;
+import facegallery.tasks.ImageBytesReader;
 import facegallery.utils.ByteArray;
 import javafx.application.Application;
 

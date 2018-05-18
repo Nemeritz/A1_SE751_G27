@@ -1,4 +1,4 @@
-package facegallery;
+package facegallery.tasks;
 
 import apt.annotations.Future;
 import apt.annotations.Task;

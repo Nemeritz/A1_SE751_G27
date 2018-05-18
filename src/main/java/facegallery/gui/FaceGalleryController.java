@@ -1,9 +1,9 @@
 package facegallery.gui;
 
 import apt.annotations.Future;
-import facegallery.FaceDetector;
+import facegallery.tasks.FaceDetector;
 import facegallery.FaceGallery;
-import facegallery.ImageBytesReader;
+import facegallery.tasks.ImageBytesReader;
 import facegallery.utils.ByteArray;
 import facegallery.utils.MyImageView;
 import javafx.event.Event;
