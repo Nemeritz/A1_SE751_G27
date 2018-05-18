@@ -1,98 +1,90 @@
 package facegallery;
 
+import apt.annotations.AsyncCatch;
 import apt.annotations.Future;
 import apt.annotations.Task;
 import apt.annotations.TaskInfoType;
 import facegallery.utils.ByteArray;
-import facegallery.utils.Parallelized;
 import pu.loopScheduler.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
-public class ImageBytesReader extends Parallelized<Void, ByteArray> {
+public class ImageBytesReader {
     private File[] fileList;
+    private ByteArray[] imageBytes;
 
     public ImageBytesReader(String folderPath) {
-        super(null);
         fileList = getImageListFromDir(folderPath);
-    }
-
-    @Override
-    public List<ByteArray> runSequential() {
-        List<ByteArray> fileBytes = new ArrayList<>(fileList.length);
-
-        for (File file : fileList) {
-            try {
-                fileBytes.add(new ByteArray(Files.readAllBytes(file.toPath())));
-            }
-            catch (IOException e) {
-                System.err.println(e.getLocalizedMessage());
-                fileBytes.add(new ByteArray(null));
-            }
-        }
-
-        return fileBytes;
-    }
-
-    @Override
-    public boolean runParallel(List<ByteArray> results) {
-        LoopScheduler scheduler = LoopSchedulerFactory
-                .createLoopScheduler(
-                        0,
-                        fileList.length,
-                        1,
-                        10,
-                        AbstractLoopScheduler.LoopCondition.LessThan,
-                        LoopSchedulerFactory.LoopSchedulingType.Static
-                );
-
-        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 10)
-        Void v = readFileWorker(results, scheduler);
-
-        return true;
-    }
-
-    public boolean runParallel(List<ByteArray> results, List<AtomicBoolean> ready) {
-        LoopScheduler scheduler = LoopSchedulerFactory
-                .createLoopScheduler(
-                        0,
-                        fileList.length,
-                        1,
-                        10,
-                        AbstractLoopScheduler.LoopCondition.LessThan,
-                        LoopSchedulerFactory.LoopSchedulingType.Static
-                );
-
-        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 10)
-        Void v = readFileWorker(results, ready, scheduler);
-
-        return true;
-    }
-
-    @Override
-    public List<ByteArray> createResultsContainer() {
-        ArrayList<ByteArray> containers = new ArrayList<>(fileList.length);
-        for (int i = 0; i < fileList.length; i++) {
-            containers.add(new ByteArray(null));
-        }
-        return containers;
-    }
-
-    public List<AtomicBoolean> createReadyContainer() {
-        ArrayList<AtomicBoolean> containers = new ArrayList<>(fileList.length);
-        for (int i = 0; i < fileList.length; i++) {
-            containers.add(new AtomicBoolean(false));
-        }
-        return containers;
+        imageBytes = new ByteArray[fileList.length];
     }
 
     public File[] getFileList() {
         return fileList;
+    }
+
+    public ByteArray[] getImageBytes() {
+        return imageBytes;
+    }
+
+    public ByteArray[] run() {
+        ByteArray[] imageBytes = new ByteArray[fileList.length];
+
+        for (int i = 0; i < fileList.length; i++) {
+            try {
+                imageBytes[i] = new ByteArray(Files.readAllBytes(fileList[i].toPath()));
+            }
+            catch (IOException e) {
+                System.err.println(e.getLocalizedMessage());
+                imageBytes[i] = null;
+            }
+        }
+
+        return imageBytes;
+    }
+
+    public BlockingQueue<Integer> runAsync() {
+        BlockingQueue<Integer> readyQueue = new LinkedBlockingQueue<>();
+
+        LoopScheduler scheduler = LoopSchedulerFactory
+                .createLoopScheduler(
+                        0,
+                        imageBytes.length,
+                        1,
+                        imageBytes.length,
+                        2,
+                        AbstractLoopScheduler.LoopCondition.LessThan,
+                        LoopSchedulerFactory.LoopSchedulingType.Static
+                );
+
+        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 2, reduction = "AND")
+        @AsyncCatch(throwables = {IOException.class}, handlers = {"asyncExceptionHandler()"})
+        Boolean sync = asyncWorker(scheduler, readyQueue);
+
+        return readyQueue;
+    }
+
+    public Boolean runAsync(Void wait) {
+        BlockingQueue<Integer> readyQueue = new LinkedBlockingQueue<>();
+
+        LoopScheduler scheduler = LoopSchedulerFactory
+                .createLoopScheduler(
+                        0,
+                        imageBytes.length,
+                        1,
+                        2,
+                        AbstractLoopScheduler.LoopCondition.LessThan,
+                        LoopSchedulerFactory.LoopSchedulingType.Static
+                );
+
+        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 2, reduction = "AND")
+        @AsyncCatch(throwables = {IOException.class}, handlers = {"asyncExceptionHandler()"})
+        Boolean sync = asyncWorker(scheduler);
+
+        return sync;
     }
 
     private File[] getImageListFromDir(String filePath) {
@@ -102,37 +94,41 @@ public class ImageBytesReader extends Parallelized<Void, ByteArray> {
         });
     }
 
-    private Void readFileWorker(List<ByteArray> results, List<AtomicBoolean> ready, LoopScheduler scheduler) {
+    @Task
+    private Boolean asyncWorker(LoopScheduler scheduler) {
         LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
-        System.out.println("Report thread: " + Integer.toString(ThreadID.getStaticID()));
 
         for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
             try {
-                results.get(i).setBytes(Files.readAllBytes(fileList[i].toPath()));
-            } catch (Exception e) {
+                imageBytes[i] = new ByteArray(Files.readAllBytes(fileList[i].toPath()));
+            } catch (IOException e) {
                 System.err.println(e.getLocalizedMessage());
-            } finally {
-                ready.get(i).set(true);
+                imageBytes[i] = null;
             }
         }
 
-        return null;
+        return true;
     }
 
     @Task
-    private Void readFileWorker(List<ByteArray> results, LoopScheduler scheduler) {
+    private Boolean asyncWorker(LoopScheduler scheduler, BlockingQueue<Integer> readyQueue) {
         LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
 
         for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
             try {
-                results.get(i).setBytes(Files.readAllBytes(fileList[i].toPath()));
-            } catch (Exception e) {
+                imageBytes[i] = new ByteArray(Files.readAllBytes(fileList[i].toPath()));
+            } catch (IOException e) {
                 System.err.println(e.getLocalizedMessage());
+                imageBytes[i] = null;
             } finally {
-                processed.add(i);
+                readyQueue.offer(i);
             }
         }
 
-        return null;
+        return true;
+    }
+
+    private static void asyncExceptionHandler() {
+        System.out.println("Exception");
     }
 }
