@@ -51,7 +51,6 @@ public class ImageBytesReader {
                         0,
                         imageBytes.length,
                         1,
-                        imageBytes.length,
                         2,
                         AbstractLoopScheduler.LoopCondition.LessThan,
                         LoopSchedulerFactory.LoopSchedulingType.Static
@@ -64,8 +63,6 @@ public class ImageBytesReader {
     }
 
     public Boolean runAsync(Void wait) {
-        BlockingQueue<Integer> readyQueue = new LinkedBlockingQueue<>();
-
         LoopScheduler scheduler = LoopSchedulerFactory
                 .createLoopScheduler(
                         0,
