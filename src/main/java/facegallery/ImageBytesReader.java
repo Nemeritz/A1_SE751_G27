@@ -1,6 +1,5 @@
 package facegallery;
 
-import apt.annotations.AsyncCatch;
 import apt.annotations.Future;
 import apt.annotations.Task;
 import apt.annotations.TaskInfoType;
@@ -31,14 +30,12 @@ public class ImageBytesReader {
     }
 
     public ByteArray[] run() {
-        ByteArray[] imageBytes = new ByteArray[fileList.length];
-
         for (int i = 0; i < fileList.length; i++) {
             try {
                 imageBytes[i] = new ByteArray(Files.readAllBytes(fileList[i].toPath()));
             }
             catch (IOException e) {
-                System.err.println(e.getLocalizedMessage());
+                e.printStackTrace(System.err);
                 imageBytes[i] = null;
             }
         }
@@ -61,7 +58,6 @@ public class ImageBytesReader {
                 );
 
         @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 2, reduction = "AND")
-        @AsyncCatch(throwables = {IOException.class}, handlers = {"asyncExceptionHandler()"})
         Boolean sync = asyncWorker(scheduler, readyQueue);
 
         return readyQueue;
@@ -81,7 +77,6 @@ public class ImageBytesReader {
                 );
 
         @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 2, reduction = "AND")
-        @AsyncCatch(throwables = {IOException.class}, handlers = {"asyncExceptionHandler()"})
         Boolean sync = asyncWorker(scheduler);
 
         return sync;
@@ -95,14 +90,14 @@ public class ImageBytesReader {
     }
 
     @Task
-    private Boolean asyncWorker(LoopScheduler scheduler) {
+    private boolean asyncWorker(LoopScheduler scheduler) {
         LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
 
         for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
             try {
                 imageBytes[i] = new ByteArray(Files.readAllBytes(fileList[i].toPath()));
             } catch (IOException e) {
-                System.err.println(e.getLocalizedMessage());
+                e.printStackTrace(System.err);
                 imageBytes[i] = null;
             }
         }
@@ -111,14 +106,14 @@ public class ImageBytesReader {
     }
 
     @Task
-    private Boolean asyncWorker(LoopScheduler scheduler, BlockingQueue<Integer> readyQueue) {
+    private boolean asyncWorker(LoopScheduler scheduler, BlockingQueue<Integer> readyQueue) {
         LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
 
         for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
             try {
                 imageBytes[i] = new ByteArray(Files.readAllBytes(fileList[i].toPath()));
             } catch (IOException e) {
-                System.err.println(e.getLocalizedMessage());
+                e.printStackTrace(System.err);
                 imageBytes[i] = null;
             } finally {
                 readyQueue.offer(i);
@@ -126,9 +121,5 @@ public class ImageBytesReader {
         }
 
         return true;
-    }
-
-    private static void asyncExceptionHandler() {
-        System.out.println("Exception");
     }
 }

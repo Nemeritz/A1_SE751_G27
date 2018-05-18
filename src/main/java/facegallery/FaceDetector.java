@@ -1,6 +1,5 @@
 package facegallery;
 
-import apt.annotations.AsyncCatch;
 import apt.annotations.Future;
 import apt.annotations.Task;
 import apt.annotations.TaskInfoType;
@@ -27,19 +26,21 @@ public class FaceDetector {
         return detections;
     }
 
-    public Boolean[] run() {
-        Boolean[] results = new Boolean[imageBytes.length];
-
-        for (int i = 0; i < imageBytes.length; i++) {
-            if (imageBytes[i] != null) {
-                results[i] = detect(imageBytes[i]);
+    public Boolean[] run(boolean batch) {
+        if (!batch) {
+            for (int i = 0; i < imageBytes.length; i++) {
+                if (imageBytes[i] != null) {
+                    detections[i] = detect(imageBytes[i]);
+                }
+                else {
+                    detections[i] = null;
+                }
             }
-            else {
-                results[i] = null;
-            }
+        } else {
+            detections = detect(imageBytes);
         }
 
-        return results;
+        return detections;
     }
 
     public BlockingQueue<Integer> runAsync() {
@@ -47,7 +48,6 @@ public class FaceDetector {
 
         for (int i = 0; i < imageBytes.length; i++) {
             @Future(taskType = TaskInfoType.INTERACTIVE)
-            @AsyncCatch(throwables={Exception.class}, handlers={"asyncExceptionHandler()"})
             Boolean task = asyncWorker(i, readyQueue);
         }
 
@@ -60,7 +60,6 @@ public class FaceDetector {
 
         for (int i = 0; i < imageBytes.length; i++) {
             @Future(taskType = TaskInfoType.INTERACTIVE)
-            @AsyncCatch(throwables={Exception.class}, handlers={"asyncExceptionHandler()"})
             Boolean task = asyncWorker(i);
             taskGroup[i] = task;
         }
@@ -70,14 +69,13 @@ public class FaceDetector {
 
     public void runAsyncPipeline(BlockingQueue<Integer> inputReady, BlockingQueue<Integer> readyQueue) {
         @Future(taskType = TaskInfoType.INTERACTIVE)
-        @AsyncCatch(throwables={Exception.class}, handlers={"asyncExceptionHandler()"})
         Boolean sync = asyncPipelineWorkerOuter(inputReady, readyQueue);
     }
 
     @Task
     private Boolean asyncWorker(Integer index) {
         try {
-            detections[index] = CloudVisionFaceDetector.imageHasFace(imageBytes[index].getBytes());
+            detections[index] = CloudVisionFaceDetector.imageHasFace(imageBytes[index]);
         } catch (Exception e) {
             System.err.println(e.getLocalizedMessage());
             detections[index] = false;
@@ -89,7 +87,7 @@ public class FaceDetector {
     @Task
     private Boolean asyncWorker(Integer index, BlockingQueue<Integer> readyQueue) {
         try {
-            detections[index] = CloudVisionFaceDetector.imageHasFace(imageBytes[index].getBytes());
+            detections[index] = CloudVisionFaceDetector.imageHasFace(imageBytes[index]);
         } catch (Exception e) {
             System.err.println(e.getLocalizedMessage());
             detections[index] = false;
@@ -108,7 +106,7 @@ public class FaceDetector {
                 @Future(taskType = TaskInfoType.INTERACTIVE)
                 Boolean sync = asyncPipelineWorkerInner(nextIndex, outputReady);
             } catch (InterruptedException e) {
-                System.out.println(e.getLocalizedMessage());
+                e.printStackTrace(System.err);
             }
         }
 
@@ -118,24 +116,29 @@ public class FaceDetector {
     @Task
     private Boolean asyncPipelineWorkerInner(Integer index, BlockingQueue<Integer> readyQueue) {
         try {
-            detections[index] = CloudVisionFaceDetector.imageHasFace(imageBytes[index].getBytes());
+            detections[index] = CloudVisionFaceDetector.imageHasFace(imageBytes[index]);
             readyQueue.offer(index);
         } catch (Exception e) {
-            System.err.println(e.getLocalizedMessage());
+            e.printStackTrace(System.err);
         }
         return true;
     }
 
-    private void asyncExceptionHandler() {
-        System.out.println("Exception");
-    }
-
-    private boolean detect(ByteArray byteArray) {
+    private Boolean detect(ByteArray byteArray) {
         try {
             return CloudVisionFaceDetector.imageHasFace(byteArray);
         } catch (Exception e) {
-            System.err.println(e.getLocalizedMessage());
+            e.printStackTrace(System.err);
             return false;
+        }
+    }
+
+    private Boolean[] detect(ByteArray[] byteArrays) {
+        try {
+            return CloudVisionFaceDetector.imageHasFace(byteArrays);
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
+            return null;
         }
     }
 }

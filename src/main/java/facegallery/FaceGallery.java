@@ -2,7 +2,9 @@ package facegallery;
 
 import apt.annotations.InitParaTask;
 import apt.annotations.TaskScheduingPolicy;
+import facegallery.gui.FaceGalleryGui;
 import facegallery.utils.ByteArray;
+import javafx.application.Application;
 
 import java.io.File;
 import java.util.Scanner;
@@ -15,11 +17,8 @@ public class FaceGallery {
     public static final String TEST_DATASET_DIR = DATASET_DIR + "/Test";
     public static final int PROCESSORS = Runtime.getRuntime().availableProcessors();
 
-    @InitParaTask(numberOfThreads = 32, schedulingPolicy = TaskScheduingPolicy.WorkStealing)
+    @InitParaTask(numberOfThreads = 32, schedulingPolicy = TaskScheduingPolicy.MixedSchedule)
 	public static void main(String[] args) {
-        //initialize the GUI
-        javafx.application.Application.launch(FaceGalleryGui.class);
-        
 	    try (Scanner scanner = new Scanner(System.in)) {
             String[] prompt = {
                     "Select operating mode:",
@@ -59,15 +58,23 @@ public class FaceGallery {
 	public static void runSequential() {
         ImageBytesReader imageBytesReader = new ImageBytesReader(TEST_DATASET_DIR);
         File[] fileList = imageBytesReader.getFileList();
+
+        long imageReadStartTime = System.currentTimeMillis();
         ByteArray[] imageBytes = imageBytesReader.run();
+        long imageReadEndTime = System.currentTimeMillis();
 
         FaceDetector faceDetector = new FaceDetector(imageBytes);
-        Boolean[] detections = faceDetector.run();
+
+        long faceDetectStartTime = System.currentTimeMillis();
+        Boolean[] detections = faceDetector.run(true);
+        long faceDetectEndTime = System.currentTimeMillis();
 
         System.out.println("Sequential as follows:");
         for (int i = 0; i < detections.length; i++) {
             System.out.println(fileList[i].getName() + ": " + detections[i].toString());
         }
+        System.out.println("Image read took " + Double.toString((double)(imageReadEndTime - imageReadStartTime) / 1000) + " seconds");
+        System.out.println("Face detection took " + Double.toString((double)(faceDetectEndTime - faceDetectStartTime) / 1000) + " seconds");
     }
 
     public static void runParallel() {
@@ -105,6 +112,6 @@ public class FaceGallery {
     }
 
     public static void runGui() {
-        // javafx.application.Application.launch(FaceGalleryGui.class);
+        Application.launch(FaceGalleryGui.class);
     }
 }

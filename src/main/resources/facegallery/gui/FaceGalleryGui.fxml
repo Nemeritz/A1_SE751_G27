@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<?import javafx.beans.property.StringProperty?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import java.lang.String?>
+<?import java.net.URL?>
+<GridPane prefHeight="600.0"
+          prefWidth="800.0"
+          xmlns="http://javafx.com/javafx/8.0.121"
+          xmlns:fx="http://javafx.com/fxml/1"
+          fx:controller="facegallery.gui.FaceGalleryController">
+    <columnConstraints>
+        <ColumnConstraints hgrow="ALWAYS" minWidth="536" percentWidth="67" prefWidth="100.0" />
+        <ColumnConstraints hgrow="ALWAYS" minWidth="264" percentWidth="33" prefWidth="100.0" />
+    </columnConstraints>
+    <rowConstraints>
+        <RowConstraints vgrow="ALWAYS" minHeight="600" percentHeight="100"/>
+    </rowConstraints>
+    <fx:define>
+        <ToggleGroup fx:id="runMode"/>
+    </fx:define>
+    <ScrollPane fx:id="imageSlider" GridPane.columnIndex="0" GridPane.rowIndex="0">
+        <TilePane hgap="5" vgap="5" prefTileHeight="300" prefTileWidth="300" />
+    </ScrollPane>
+    <VBox spacing="15" alignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="0">
+        <HBox>
+            <Text text="Current action:"/>
+            <Text fx:id="currentAction" textAlignment="RIGHT"/>
+        </HBox>
+        <HBox>
+            <Text text="Images loaded:"/>
+            <Text fx:id="imagesLoadedTime" textAlignment="RIGHT"/>
+        </HBox>
+        <HBox>
+            <Text text="Face detection:"/>
+            <Text fx:id="faceDetectionTime" textAlignment="RIGHT"/>
+        </HBox>
+        <HBox>
+            <RadioButton text="Sequential"
+                         selected="true"
+                         toggleGroup="$runMode"
+                         alignment="CENTER"
+                         userData="sequential"/>
+            <RadioButton text="Parallel"
+                         toggleGroup="$runMode"
+                         alignment="CENTER"
+                         userData="parallel"/>
+        </HBox>
+        <Button fx:id="run" onMouseClicked="#runClicked" text="Run"/>
+    </VBox>
+    <stylesheets>
+        <URL value="@material-fx-v0_3.css" />
+    </stylesheets>
+</GridPane>
