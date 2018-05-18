@@ -5,13 +5,13 @@ import apt.annotations.TaskScheduingPolicy;
 import facegallery.utils.ByteArray;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class FaceGallery {
     public static final String DATASET_DIR = System.getenv("FACEGALLERY_DATASET");
+    public static final String TEST_DATASET_DIR = DATASET_DIR + "/Test";
     public static final int PROCESSORS = Runtime.getRuntime().availableProcessors();
 
     @InitParaTask(numberOfThreads = 32, schedulingPolicy = TaskScheduingPolicy.WorkStealing)
@@ -21,9 +21,7 @@ public class FaceGallery {
                     "Select operating mode:",
                     "\t1. CLI-Sequential",
                     "\t2. CLI-Parallel",
-                    "\t3. CLI-Parallel-Pipeline",
-                    "\t4. GUI",
-                    "\t5. Experiment",
+                    "\t3. GUI",
                     "\tAny other key to exit"
             };
 
@@ -45,14 +43,7 @@ public class FaceGallery {
                     runParallel();
                     break;
                 case 3:
-                    runParallelPipeline();
-                    break;
-                case 4:
                     runGui();
-                    break;
-                case 5:
-                    Experiments exp = new Experiments();
-                    ByteArray[] imageBytes = exp.loadImagesAsync(DATASET_DIR + "/" + "Test");
                     break;
                 default:
                     break;
@@ -61,55 +52,52 @@ public class FaceGallery {
         }
 	}
 
-	public static int intTask() {
-        return 1;
-    }
-
 	public static void runSequential() {
-        ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR + "/" + "Test");
-        List<File> fileList = Arrays.asList(imageBytesReader.getFileList());
-        List<ByteArray> fileBytes = imageBytesReader.runSequential();
+        ImageBytesReader imageBytesReader = new ImageBytesReader(TEST_DATASET_DIR);
+        File[] fileList = imageBytesReader.getFileList();
+        ByteArray[] imageBytes = imageBytesReader.run();
 
-        FaceDetector faceDetector = new FaceDetector(fileBytes);
-        List<AtomicBoolean> detections = faceDetector.runSequential();
+        FaceDetector faceDetector = new FaceDetector(imageBytes);
+        Boolean[] detections = faceDetector.run();
 
         System.out.println("Sequential as follows:");
-        for (int i = 0; i < detections.size(); i++) {
-            System.out.println(fileList.get(i).getName() + ": " + detections.get(i).toString());
+        for (int i = 0; i < detections.length; i++) {
+            System.out.println(fileList[i].getName() + ": " + detections[i].toString());
         }
     }
 
     public static void runParallel() {
-        ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR + "/" + "Test");
-        List<File> fileList = Arrays.asList(imageBytesReader.getFileList());
-        List<ByteArray> fileBytes = imageBytesReader.createResultsContainer();
-        List<AtomicBoolean> bytesReady = imageBytesReader.createReadyContainer();
+        // Image reading
+        ImageBytesReader imageBytesReader = new ImageBytesReader(TEST_DATASET_DIR);
+        File[] fileList = imageBytesReader.getFileList();
+        BlockingQueue<Integer> imageBytesReady = imageBytesReader.runAsync();
+        ByteArray[] imageBytes = imageBytesReader.getImageBytes();
 
-//        FaceDetector faceDetector = new FaceDetector(fileBytes);
-//        List<AtomicBoolean> detections = faceDetector.createResultsContainer();
-//        List<AtomicBoolean> detectionsReady = faceDetector.createReadyContainer();
 
-        boolean bytesRead = imageBytesReader.runParallel(fileBytes, bytesReady);
+        // Cloud Vision Detection
+        FaceDetector faceDetector = new FaceDetector(imageBytes);
+        BlockingQueue<Integer> faceDetectionReady = new LinkedBlockingQueue<>();
+        faceDetector.runAsyncPipeline(imageBytesReady, faceDetectionReady);
+        Boolean[] detections = faceDetector.getDetections();
 
-//        if (bytesRead) {
-//            boolean detectionsDone = faceDetector.runParallel(detections, detectionsReady);
-//            if (detectionsDone) {
-//                System.out.println("Parallel as follows:");
-//                for (int i = 0; i < detections.size(); i++) {
-//                    System.out.println(fileList.get(i).getName() + ": " + detections.get(i).toString());
-//                }
-//            }
-//        }
-    }
+        System.out.println("Async check for null at first... should be all true...");
+        for (int i = 0; i < detections.length; i++) {
+            System.out.println(fileList[i].getName() + ": " + Boolean.toString(detections[i] == null));
+        }
 
-    public static void runParallelPipeline() {
-        ImageBytesReader imageBytesReader = new ImageBytesReader(DATASET_DIR + "/" + "Test");
-        List<ByteArray> fileBytes = imageBytesReader.createResultsContainer();
-        List<AtomicBoolean> bytesReady = imageBytesReader.createReadyContainer();
+        System.out.println("Waiting... should be all false...");
+        for (int i = 0; i < imageBytes.length; i++) {
+            try {
+                System.out.println(fileList[i].getName() + ": " + Boolean.toString(detections[faceDetectionReady.take()] == null));
+            } catch (InterruptedException ignore) {
 
-        FaceDetector faceDetector = new FaceDetector(fileBytes);
-        List<AtomicBoolean> detections = faceDetector.createResultsContainer();
-        List<AtomicBoolean> detectionsReady = faceDetector.createReadyContainer();
+            }
+        }
+
+        System.out.println("And now results...");
+        for (int i = 0; i < imageBytes.length; i++) {
+            System.out.println(fileList[i].getName() + ": " + Boolean.toString(detections[i]));
+        }
     }
 
     public static void runGui() {
