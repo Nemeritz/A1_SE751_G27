@@ -43,6 +43,23 @@ public class ImageBytesReader {
         return imageBytes;
     }
 
+    public ByteArray[] run(BlockingQueue<Integer> readyQueue) {
+        for (int i = 0; i < fileList.length; i++) {
+            try {
+                imageBytes[i] = new ByteArray(Files.readAllBytes(fileList[i].toPath()));
+            }
+            catch (IOException e) {
+                e.printStackTrace(System.err);
+                imageBytes[i] = null;
+            }
+            finally {
+                readyQueue.offer(i);
+            }
+        }
+
+        return imageBytes;
+    }
+
     public BlockingQueue<Integer> runAsync() {
         BlockingQueue<Integer> readyQueue = new LinkedBlockingQueue<>();
 

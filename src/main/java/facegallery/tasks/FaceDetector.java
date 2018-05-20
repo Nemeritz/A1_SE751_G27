@@ -43,6 +43,27 @@ public class FaceDetector {
         return detections;
     }
 
+    public Boolean[] run(boolean batch, BlockingQueue<Integer> readyQueue) {
+        if (!batch) {
+            for (int i = 0; i < imageBytes.length; i++) {
+                if (imageBytes[i] != null) {
+                    detections[i] = detect(imageBytes[i]);
+                }
+                else {
+                    detections[i] = null;
+                }
+                readyQueue.offer(i);
+            }
+        } else {
+            detections = detect(imageBytes);
+            for (int i = 0; i < imageBytes.length; i++) {
+                readyQueue.offer(i);
+            }
+        }
+
+        return detections;
+    }
+
     public BlockingQueue<Integer> runAsync() {
         BlockingQueue<Integer> readyQueue = new LinkedBlockingQueue<>();
 

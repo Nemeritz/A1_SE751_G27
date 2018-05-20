@@ -46,6 +46,20 @@ public class ThumbnailGenerator {
         return resized;
     }
 
+    public BufferedImage[] run(BlockingQueue<Integer> readyQueue) {
+        for (int i = 0; i < imageBytes.length; i++) {
+            if (imageBytes[i] != null) {
+                resized[i] = resize(imageBytes[i]);
+            }
+            else {
+                resized[i] = null;
+            }
+            readyQueue.offer(i);
+        }
+
+        return resized;
+    }
+
     public BlockingQueue<Integer> runAsync() {
         BlockingQueue<Integer> readyQueue = new LinkedBlockingQueue<>();
 

@@ -40,6 +40,21 @@ public class ImageRescaler {
         return rescaled;
     }
 
+    public BufferedImage[] run(BlockingQueue<Integer> readyQueue) {
+        for (int i = 0; i < images.length; i++) {
+            if (images[i] != null) {
+                images[i] = rescale(images[i]);
+            }
+            else {
+                images[i] = null;
+            }
+
+            readyQueue.offer(i);
+        }
+
+        return rescaled;
+    }
+
     public BlockingQueue<Integer> runAsync() {
         BlockingQueue<Integer> readyQueue = new LinkedBlockingQueue<>();
 

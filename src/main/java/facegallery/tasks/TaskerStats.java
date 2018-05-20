@@ -2,28 +2,39 @@ package facegallery.tasks;
 
 public class TaskerStats {
     public LastAction lastAction;
-    public double fileReadRuntime;
-    public double thumbnailGenerateRuntime;
-    public double faceDetectionRuntime;
-    public double imageRescaleRuntime;
+    public Stats fileReadStats;
+    public Stats thumbnailGenerateStats;
+    public Stats faceDetectionStats;
+    public Stats imageRescaleStats;
     public double totalRuntime;
 
     public TaskerStats(
             LastAction lastAction,
-            double fileReadRuntime,
-            double thumbnailGenerateRuntime,
-            double faceDetectionRuntime,
-            double imageRescaleRuntime,
+            Stats fileReadStats,
+            Stats thumbnailGenerateStats,
+            Stats faceDetectionStats,
+            Stats imageRescaleStats,
             double totalRuntime
     ) {
         this.lastAction = lastAction;
-        this.fileReadRuntime = fileReadRuntime;
-        this.thumbnailGenerateRuntime = thumbnailGenerateRuntime;
-        this.faceDetectionRuntime = faceDetectionRuntime;
-        this.imageRescaleRuntime = imageRescaleRuntime;
+        this.fileReadStats = fileReadStats;
+        this.thumbnailGenerateStats = thumbnailGenerateStats;
+        this.faceDetectionStats = faceDetectionStats;
+        this.imageRescaleStats = imageRescaleStats;
         this.totalRuntime = totalRuntime;
     }
 
+    public class Stats {
+        public int taskProgress;
+        public int taskTotal;
+        public double runtime;
+
+        public Stats(int taskProgress, int taskTotal, double runtime) {
+            this.taskProgress = taskProgress;
+            this.taskTotal = taskTotal;
+            this.runtime = runtime;
+        }
+    }
 
     public enum LastAction {
         IDLE,
