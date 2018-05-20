@@ -1,6 +1,14 @@
 package facegallery.gui;
 import facegallery.FaceGallery;
 
+import apt.annotations.Future;
+import facegallery.tasks.FaceDetector;
+import facegallery.FaceGallery;
+import facegallery.tasks.ImageBytesReader;
+import facegallery.utils.ByteArray;
+import facegallery.utils.MyImageView;
+import facegallery.tasks.*;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -11,17 +19,26 @@ import java.util.List;
 
 public class FaceGalleryGui extends JFrame {
 
-    private JLabel photographLabel = new JLabel();
-    private JToolBar buttonBar = new JToolBar();
+    private ScrollPane scrollPane = new ScrollPane();
+    private JPanel buttonBar = new JPanel();
     private JButton parallel,sequential;
+    private JPanel controls = new JPanel();
+    private JPanel controlPanel = new JPanel();
 
-    private String imagedir = FaceGallery.TEST_DATASET_DIR;
-    File folder = new File(imagedir);
-    File[] listOfFiles = folder.listFiles();
+
+
+    ImageBytesReader imageBytesReader = new ImageBytesReader("/Users/aneesh/Images");
+    FaceDetector faceDetector = new FaceDetector(imageBytesReader.getImageBytes());
+    File[] listOfFiles = imageBytesReader.getFileList();
     Dimension d;
     int currentWidth, currentHeight;
+    JLabel timeTakenImages;
+    JLabel timeTakenFaces;
+    JLabel time;
+    JLabel timeFaces;
+    JLabel currentAction;
 
-/*
+
     public static void main(String args[]) {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
@@ -29,41 +46,68 @@ public class FaceGalleryGui extends JFrame {
                 app.setVisible(true);
             }
         });
-    } */
+    }
     private class parallelListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-        FaceGallery.runParallel();
+
         }
     }
     private class sequentialListener implements ActionListener{
         @Override
         public void actionPerformed(ActionEvent e) {
-        FaceGallery.runSequential();
+            currentAction.setText("Reading files...");
+
+            long imageReadStartTime = System.currentTimeMillis();
+            @Future
+            ByteArray[] imageBytes = imageBytesReader.run();
+            long imageReadEndTime = System.currentTimeMillis();
+
+            time.setText(Double.toString((double)(imageReadEndTime - imageReadStartTime) / 1000));
+
+            currentAction.setText("Detecting faces...");
+            long faceDetectStartTime = System.currentTimeMillis();
+            Boolean[] detections = faceDetector.run(true);
+            long faceDetectEndTime = System.currentTimeMillis();
+
+            timeFaces.setText(Double.toString((double)(faceDetectEndTime - faceDetectStartTime) / 1000));
+
+            currentAction.setText("Done!");
+            System.out.println("Done");
+            //return true;
+
         }
     }
     public FaceGalleryGui() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setTitle("Please Select an Image");
-
-
-        photographLabel.setVerticalTextPosition(JLabel.BOTTOM);
-        photographLabel.setHorizontalTextPosition(JLabel.CENTER);
-        photographLabel.setHorizontalAlignment(JLabel.CENTER);
-        photographLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        setTitle("Gallery app");
+        timeTakenImages = new JLabel("time taken to load Images:");
+        timeTakenFaces = new JLabel("time taken to detect Faces:");
+        time = new JLabel("   ");
+        timeFaces = new JLabel("  ");
+        currentAction = new JLabel("");
+        buttonBar.setLayout(new GridLayout(0,4,5,5));
         parallel = new JButton("parallel");
         sequential = new JButton("sequential");
         parallel.addActionListener(new parallelListener());
         sequential.addActionListener(new sequentialListener());
-        buttonBar.add(new JLabel("Detect Faces in:"));
-        buttonBar.add(parallel);
-        buttonBar.add(sequential);
-        buttonBar.add(Box.createGlue());
-        buttonBar.add(Box.createGlue());
+        controls.setLayout(new BoxLayout(controls, BoxLayout.PAGE_AXIS));
+        controls.add(new JLabel("Detect Faces in:"),BorderLayout.CENTER);
+        controls.add(parallel);
+        controls.add(sequential);
+        controls.add(timeTakenImages);
+        controls.add(time);
+        controls.add(timeTakenFaces);
+        controls.add(timeFaces);
+        controls.add(currentAction);
+        controlPanel.add(controls,BorderLayout.SOUTH);
 
 
-        add(buttonBar, BorderLayout.SOUTH);
-        add(photographLabel, BorderLayout.CENTER);
+        setLayout(new GridLayout(1,2));
+
+        add(scrollPane);
+        //add(photographLabel, BorderLayout.CENTER);
+        add(controlPanel);
 
         setSize(1280, 720);
         d = getSize();
@@ -76,7 +120,6 @@ public class FaceGalleryGui extends JFrame {
 
 
         loadimages.execute();
-//        setVisible(true);
     }
 
 
@@ -92,9 +135,9 @@ public class FaceGalleryGui extends JFrame {
                 ThumbnailAction thumbAction;
 
 
-                ImageIcon thumbnailIcon = new ImageIcon(getScaledImage(icon.getImage(), 32, 32));
+                ImageIcon thumbnailIcon = new ImageIcon(getScaledImage(icon.getImage(), 150, 150));
 
-                thumbAction = new ThumbnailAction(icon, thumbnailIcon);
+                thumbAction = new ThumbnailAction(thumbnailIcon);
 
 
 
@@ -111,8 +154,9 @@ public class FaceGalleryGui extends JFrame {
             for (ThumbnailAction thumbAction : chunks) {
                 JButton thumbButton = new JButton(thumbAction);
 
-                buttonBar.add(thumbButton, buttonBar.getComponentCount() - 1);
+                buttonBar.add(thumbButton);
             }
+            scrollPane.add(buttonBar);
         }
     };
 
@@ -146,11 +190,8 @@ public class FaceGalleryGui extends JFrame {
     private class ThumbnailAction extends AbstractAction{
 
 
-        private ImageIcon displayPhoto;
+        public ThumbnailAction(Icon thumb){
 
-
-        public ThumbnailAction(ImageIcon photo, Icon thumb){
-            displayPhoto = photo;
 
 
             putValue(LARGE_ICON_KEY, thumb);
@@ -158,7 +199,7 @@ public class FaceGalleryGui extends JFrame {
 
 
         public void actionPerformed(ActionEvent e) {
-            photographLabel.setIcon(new ImageIcon(getScaledImage(displayPhoto.getImage(),currentWidth,currentHeight)));
+
 
         }
     }
