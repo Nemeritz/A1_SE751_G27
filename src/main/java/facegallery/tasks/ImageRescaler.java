@@ -12,11 +12,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class ImageRescaler {
     private BufferedImage[] images;
+    private Boolean[] hasFace;
     private BufferedImage[] rescaled;
     private RescaleOp rescaleOp;
 
-    public ImageRescaler(BufferedImage[] images, RescaleOp rescaleOp) {
+    public ImageRescaler(BufferedImage[] images, Boolean[] hasFace, RescaleOp rescaleOp) {
         rescaled = new BufferedImage[images.length];
+        this.images = images;
+        this.hasFace = hasFace;
     }
 
     public BufferedImage[] getImages() {
@@ -30,10 +33,10 @@ public class ImageRescaler {
     public BufferedImage[] run() {
         for (int i = 0; i < images.length; i++) {
             if (images[i] != null) {
-                images[i] = rescale(images[i]);
+                rescaled[i] = rescale(images[i], hasFace[i]);
             }
             else {
-                images[i] = null;
+                rescaled[i] = null;
             }
         }
 
@@ -43,10 +46,10 @@ public class ImageRescaler {
     public BufferedImage[] run(BlockingQueue<Integer> readyQueue) {
         for (int i = 0; i < images.length; i++) {
             if (images[i] != null) {
-                images[i] = rescale(images[i]);
+                rescaled[i] = rescale(images[i], hasFace[i]);
             }
             else {
-                images[i] = null;
+                rescaled[i] = null;
             }
 
             readyQueue.offer(i);
@@ -111,7 +114,7 @@ public class ImageRescaler {
         LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
 
         for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
-            rescaled[i] = rescale(images[i]);
+            rescaled[i] = rescale(images[i], hasFace[i]);
         }
 
         return true;
@@ -122,7 +125,7 @@ public class ImageRescaler {
         LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
 
         for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
-            rescaled[i] = rescale(images[i]);
+            rescaled[i] = rescale(images[i], hasFace[i]);
             readyQueue.offer(i);
         }
 
@@ -136,7 +139,7 @@ public class ImageRescaler {
         for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
             try {
                 Integer nextIndex = inputReady.take();
-                rescaled[nextIndex] = rescale(images[nextIndex]);
+                rescaled[nextIndex] = rescale(images[nextIndex], hasFace[nextIndex]);
                 outputReady.offer(nextIndex);
             } catch (InterruptedException e) {
                 e.printStackTrace(System.err);
@@ -146,12 +149,12 @@ public class ImageRescaler {
         return true;
     }
 
-    private BufferedImage rescale(BufferedImage image) {
+    private BufferedImage rescale(BufferedImage image, Boolean hasFace) {
         if (image != null) {
-            BufferedImage dstImage = null;
-            dstImage = rescaleOp.filter(image, null);
-
-            return dstImage;
+            if (!hasFace) {
+                return rescaleOp.filter(image, null);
+            }
+            return image;
         }
 
         return null;

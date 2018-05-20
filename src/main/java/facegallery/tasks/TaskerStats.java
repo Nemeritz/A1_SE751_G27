@@ -2,10 +2,10 @@ package facegallery.tasks;
 
 public class TaskerStats {
     public LastAction lastAction;
-    public Stats fileReadStats;
-    public Stats thumbnailGenerateStats;
-    public Stats faceDetectionStats;
-    public Stats imageRescaleStats;
+    public Stats fileReadStats = new Stats();
+    public Stats thumbnailGenerateStats = new Stats();
+    public Stats faceDetectionStats = new Stats();
+    public Stats imageRescaleStats = new Stats();
     public double totalRuntime;
 
     public TaskerStats(
@@ -24,7 +24,10 @@ public class TaskerStats {
         this.totalRuntime = totalRuntime;
     }
 
-    public class Stats {
+    public TaskerStats() {
+    }
+
+    public static class Stats {
         public int taskProgress;
         public int taskTotal;
         public double runtime;
@@ -33,6 +36,10 @@ public class TaskerStats {
             this.taskProgress = taskProgress;
             this.taskTotal = taskTotal;
             this.runtime = runtime;
+        }
+
+        public Stats() {
+
         }
     }
 

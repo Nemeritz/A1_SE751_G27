@@ -6,9 +6,8 @@ import facegallery.gui.FaceGalleryGui;
 import facegallery.tasks.FaceDetector;
 import facegallery.tasks.ImageBytesReader;
 import facegallery.utils.ByteArray;
-import javafx.application.Application;
-import javax.swing.SwingUtilities;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.Scanner;
 import java.util.concurrent.BlockingQueue;
@@ -121,5 +120,6 @@ public class FaceGallery {
                 app.setVisible(true);
             }
         });
+        while(true);
     }
 }

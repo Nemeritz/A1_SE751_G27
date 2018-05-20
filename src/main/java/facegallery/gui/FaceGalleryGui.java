@@ -1,28 +1,13 @@
 package facegallery.gui;
+import facegallery.FaceGallery;
+
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.List;
-import javax.swing.AbstractAction;
-
-import apt.annotations.Future;
-import facegallery.tasks.FaceDetector;
-import facegallery.FaceGallery;
-import facegallery.tasks.ImageBytesReader;
-import facegallery.utils.ByteArray;
-
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JToolBar;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 
 public class FaceGalleryGui extends JFrame {
 
@@ -30,7 +15,7 @@ public class FaceGalleryGui extends JFrame {
     private JToolBar buttonBar = new JToolBar();
     private JButton parallel,sequential;
 
-    private String imagedir = "/Users/aneesh/Images";
+    private String imagedir = FaceGallery.TEST_DATASET_DIR;
     File folder = new File(imagedir);
     File[] listOfFiles = folder.listFiles();
     Dimension d;
