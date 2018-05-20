@@ -55,7 +55,7 @@ public class FaceGalleryController {
     private FaceDetector faceDetector;
 
     public FaceGalleryController() {
-        imageBytesReader = new ImageBytesReader(FaceGallery.TEST_DATASET_DIR);
+        imageBytesReader = new ImageBytesReader("/Users/aneesh/Images");
         faceDetector = new FaceDetector(imageBytesReader.getImageBytes());
     }
 
