@@ -7,6 +7,7 @@ import facegallery.tasks.FaceDetector;
 import facegallery.tasks.ImageBytesReader;
 import facegallery.utils.ByteArray;
 import javafx.application.Application;
+import javax.swing.SwingUtilities;
 
 import java.io.File;
 import java.util.Scanner;
@@ -114,6 +115,11 @@ public class FaceGallery {
     }
 
     public static void runGui() {
-        Application.launch(FaceGalleryGui.class);
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                FaceGalleryGui app = new FaceGalleryGui();
+                app.setVisible(true);
+            }
+        });
     }
 }
