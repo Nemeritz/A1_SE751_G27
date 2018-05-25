@@ -41,6 +41,8 @@ dependencies {
     // This dependency is found on compile classpath of this component and consumers.
     compile 'com.google.guava:guava:23.0'
 
+    compile 'com.jhlabs:filters:2.0.235'
+
     compile 'com.google.cloud:google-cloud-vision:1.26.0'
 
     compile ptTools
@@ -51,6 +53,8 @@ dependencies {
     testCompile 'junit:junit:4.12'
 
     ptRuntimeCompile 'com.google.guava:guava:23.0'
+
+    ptRuntimeCompile 'com.jhlabs:filters:2.0.235'
 
     ptRuntimeCompile 'com.google.cloud:google-cloud-vision:1.26.0'
 
@@ -64,6 +68,7 @@ repositories {
     // Use jcenter for resolving your dependencies.
     // You can declare any Maven/Ivy/file repository here.
     jcenter()
+    mavenCentral()
 }
 
 task cleanProcessorOutput(type: Delete) {

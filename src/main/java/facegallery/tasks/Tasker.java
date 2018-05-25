@@ -7,7 +7,6 @@ import facegallery.utils.ByteArray;
 import facegallery.utils.Timer;
 
 import java.awt.image.BufferedImage;
-import java.awt.image.RescaleOp;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -16,25 +15,120 @@ import java.util.function.Function;
 
 public class Tasker {
     private TaskerStats sequentialStats;
+    private TaskerStats concurrentStats;
     private TaskerStats parallelStats;
+    private TaskerStats parallelPipelineStats;
 
-    public void performSequential(Function<TaskerStats, Void> statsUpdater, Function<List<BufferedImage>, Void> imagesUpdater) {
+    public void performSequential(Function<TaskerStats, Void> statsUpdater, Function<List<BufferedImage>, Void> imagesUpdater, boolean batchFaceDetect) {
         // Preparing
         Timer timer = new Timer();
         Timer totalTimer = new Timer();
+        sequentialStats = new TaskerStats();
+        TaskerStats stats = sequentialStats;
+        ImageBytesReader imageBytesReader = new ImageBytesReader(FaceGallery.TEST_DATASET_DIR);
+        ByteArray[] imageBytes = imageBytesReader.getImageBytes();
+        ThumbnailGenerator thumbnailGenerator = new ThumbnailGenerator(imageBytes, 150);
+        BufferedImage[] thumbnails = thumbnailGenerator.getResized();
+        FaceDetector faceDetector = new FaceDetector(imageBytes);
+        Boolean[] hasFace = faceDetector.getDetections();
+        ImageRescaler imageRescaler = new ImageRescaler(thumbnails, hasFace);
+        BufferedImage[] rescaled = imageRescaler.getRescaled();
 
         totalTimer.startTiming();
 
-        sequentialStats = new TaskerStats();
+        // Set stats to file read
+        stats.lastAction = TaskerStats.LastAction.FILE_READ;
+        stats.fileReadStats.taskTotal = imageBytes.length;
+
+        // Start the timer and start the 'File Read' task
+        timer.startTiming();
+        imageBytesReader.run();
+
+        // Finalise stats and prepare for next task
+        stats.fileReadStats.taskProgress = stats.fileReadStats.taskTotal;
+        timer.stopTiming();
+
+        stats.fileReadStats.runtime = timer.getTime();
+        stats.thumbnailGenerateStats.taskTotal = imageBytes.length;
+        stats.lastAction = TaskerStats.LastAction.THUMBNAIL;
+
+        Void gs0 = statsUpdater.apply(stats);
+
+        // Start the timer and start the 'Thumbnail Generate' task
+        timer.startTiming();
+        thumbnailGenerator.run();
+
+        Void gs1 = imagesUpdater.apply(new CopyOnWriteArrayList<>(rescaled));
+
+        // Finalise stats and prepare for next task
+        stats.thumbnailGenerateStats.taskProgress = stats.thumbnailGenerateStats.taskTotal;
+        timer.stopTiming();
+
+        stats.thumbnailGenerateStats.runtime = timer.getTime();
+        stats.faceDetectionStats.taskTotal = imageBytes.length;
+        stats.lastAction = TaskerStats.LastAction.FACE_DETECT;
+
+        Void gs2 = statsUpdater.apply(stats);
+
+        // Start the timer and start the 'Face Detection' task
+        timer.startTiming();
+        faceDetector.run(batchFaceDetect);
+
+        // Finalise stats and prepare for next task
+        stats.faceDetectionStats.taskProgress = stats.faceDetectionStats.taskTotal;
+        timer.stopTiming();
+
+        stats.faceDetectionStats.runtime = timer.getTime();
+        stats.imageRescaleStats.taskTotal = hasFace.length;
+        stats.lastAction = TaskerStats.LastAction.RESCALE;
+
+        Void gs3 = statsUpdater.apply(stats);
+
+        // Start the timer and start the 'Image Rescale' task
+        timer.startTiming();
+        imageRescaler.run();
+
+        // Finalise stats and end
+        stats.imageRescaleStats.taskProgress = stats.imageRescaleStats.taskTotal;
+        timer.stopTiming();
+
+        stats.imageRescaleStats.runtime = timer.getTime();
+        stats.lastAction = TaskerStats.LastAction.IDLE;
+
+        Void gs4 = statsUpdater.apply(stats);
+
+        Void gs5 = imagesUpdater.apply(new CopyOnWriteArrayList<>(rescaled));
+
+        // All done, check time
+        totalTimer.stopTiming();
+        stats.totalRuntime = totalTimer.getTime();
+
+        Void gs6 = statsUpdater.apply(stats);
+    }
+
+    public void performConcurrent(Function<TaskerStats, Void> statsUpdater, Function<List<BufferedImage>, Void> imagesUpdater, boolean batchFaceDetect) {
+        // Preparing
+        Timer timer = new Timer();
+        Timer totalTimer = new Timer();
+        concurrentStats = new TaskerStats();
+        TaskerStats stats = concurrentStats;
         BlockingQueue<Integer> readyQueue = new LinkedBlockingQueue<>();
         ImageBytesReader imageBytesReader = new ImageBytesReader(FaceGallery.TEST_DATASET_DIR);
         ByteArray[] imageBytes = imageBytesReader.getImageBytes();
+        ThumbnailGenerator thumbnailGenerator = new ThumbnailGenerator(imageBytes, 150);
+        BufferedImage[] thumbnails = thumbnailGenerator.getResized();
+        FaceDetector faceDetector = new FaceDetector(imageBytes);
+        Boolean[] hasFace = faceDetector.getDetections();
+        ImageRescaler imageRescaler = new ImageRescaler(thumbnails, hasFace);
+        BufferedImage[] rescaled = imageRescaler.getRescaled();
+
+        totalTimer.startTiming();
 
         // Set stats to file read
-        sequentialStats.lastAction = TaskerStats.LastAction.FILE_READ;
-        sequentialStats.fileReadStats.taskTotal = imageBytes.length;
+        stats.lastAction = TaskerStats.LastAction.FILE_READ;
+        stats.fileReadStats.taskTotal = imageBytes.length;
         @Gui
-        Void gs0 = statsUpdater.apply(sequentialStats);
+        Void gs0 = statsUpdater.apply(stats);
 
         // Start the timer and start the 'File Read' task
         timer.startTiming();
@@ -43,9 +137,9 @@ public class Tasker {
 
         // Update the gui with each read for stats
         for (int i = 0; i < imageBytes.length; i++) {
-            sequentialStats.fileReadStats.taskProgress++;
+            stats.fileReadStats.taskProgress++;
             @Gui
-            Void gs1 = statsUpdater.apply(sequentialStats);
+            Void gs1 = statsUpdater.apply(stats);
 
             try {
                 readyQueue.take();
@@ -53,17 +147,16 @@ public class Tasker {
                 e.printStackTrace(System.err);
             }
         }
-        timer.stopTiming();
 
         // Finalise stats and prepare for next task
-        sequentialStats.fileReadStats.taskProgress++;
-        sequentialStats.fileReadStats.runtime = timer.getTime();
-        sequentialStats.thumbnailGenerateStats.taskTotal = imageBytes.length;
-        sequentialStats.lastAction = TaskerStats.LastAction.THUMBNAIL;
+        stats.fileReadStats.taskProgress++;
+        timer.stopTiming();
+
+        stats.fileReadStats.runtime = timer.getTime();
+        stats.thumbnailGenerateStats.taskTotal = imageBytes.length;
+        stats.lastAction = TaskerStats.LastAction.THUMBNAIL;
         @Gui
-        Void gs2 = statsUpdater.apply(sequentialStats);
-        ThumbnailGenerator thumbnailGenerator = new ThumbnailGenerator(imageBytes, 150);
-        BufferedImage[] thumbnails = thumbnailGenerator.getResized();
+        Void gs2 = statsUpdater.apply(stats);
 
         // Start the timer and start the 'Thumbnail Generate' task
         readyQueue.clear();
@@ -72,9 +165,9 @@ public class Tasker {
         Object s1 = thumbnailGenerator.run(readyQueue);
 
         for (int i = 0; i < imageBytes.length; i++) {
-            sequentialStats.thumbnailGenerateStats.taskProgress++;
+            stats.thumbnailGenerateStats.taskProgress++;
             @Gui
-            Void gs3 = statsUpdater.apply(sequentialStats);
+            Void gs3 = statsUpdater.apply(stats);
 
             try {
                 readyQueue.take();
@@ -85,28 +178,27 @@ public class Tasker {
             @Gui
             Void gs4 = imagesUpdater.apply(new CopyOnWriteArrayList<>(thumbnails));
         }
-        timer.stopTiming();
 
         // Finalise stats and prepare for next task
-        sequentialStats.thumbnailGenerateStats.taskProgress++;
-        sequentialStats.thumbnailGenerateStats.runtime = timer.getTime();
-        sequentialStats.faceDetectionStats.taskTotal = imageBytes.length;
-        sequentialStats.lastAction = TaskerStats.LastAction.FACE_DETECT;
+        stats.thumbnailGenerateStats.taskProgress++;
+        timer.stopTiming();
+
+        stats.thumbnailGenerateStats.runtime = timer.getTime();
+        stats.faceDetectionStats.taskTotal = imageBytes.length;
+        stats.lastAction = TaskerStats.LastAction.FACE_DETECT;
         @Gui
-        Void gs5 = statsUpdater.apply(sequentialStats);
-        FaceDetector faceDetector = new FaceDetector(imageBytes);
-        Boolean[] hasFace = faceDetector.getDetections();
+        Void gs5 = statsUpdater.apply(stats);
 
         // Start the timer and start the 'Face Detection' task
         readyQueue.clear();
         timer.startTiming();
         @Future
-        Object s3 = faceDetector.run(false, readyQueue);
+        Object s3 = faceDetector.run(batchFaceDetect, readyQueue);
 
         for (int i = 0; i < imageBytes.length; i++) {
-            sequentialStats.faceDetectionStats.taskProgress++;
+            stats.faceDetectionStats.taskProgress++;
             @Gui
-            Void gs6 = statsUpdater.apply(sequentialStats);
+            Void gs6 = statsUpdater.apply(stats);
 
             try {
                 readyQueue.take();
@@ -114,17 +206,16 @@ public class Tasker {
                 e.printStackTrace(System.err);
             }
         }
-        timer.stopTiming();
 
         // Finalise stats and prepare for next task
-        sequentialStats.faceDetectionStats.taskProgress++;
-        sequentialStats.faceDetectionStats.runtime = timer.getTime();
-        sequentialStats.imageRescaleStats.taskTotal = hasFace.length;
-        sequentialStats.lastAction = TaskerStats.LastAction.RESCALE;
+        stats.faceDetectionStats.taskProgress++;
+        timer.stopTiming();
+
+        stats.faceDetectionStats.runtime = timer.getTime();
+        stats.imageRescaleStats.taskTotal = hasFace.length;
+        stats.lastAction = TaskerStats.LastAction.RESCALE;
         @Gui
-        Void gs7 = statsUpdater.apply(sequentialStats);
-        ImageRescaler imageRescaler = new ImageRescaler(thumbnails, hasFace, new RescaleOp(0.3f, 0.0f, null));
-        BufferedImage[] rescaled = imageRescaler.getRescaled();
+        Void gs7 = statsUpdater.apply(stats);
 
         // Start the timer and start the 'Image Rescale' task
         readyQueue.clear();
@@ -133,9 +224,9 @@ public class Tasker {
         Object s4 = imageRescaler.run(readyQueue);
 
         for (int i = 0; i < imageBytes.length; i++) {
-            sequentialStats.imageRescaleStats.taskProgress++;
+            stats.imageRescaleStats.taskProgress++;
             @Gui
-            Void gs8 = statsUpdater.apply(sequentialStats);
+            Void gs8 = statsUpdater.apply(stats);
 
             try {
                 readyQueue.take();
@@ -146,22 +237,29 @@ public class Tasker {
             @Gui
             Void gs9 = imagesUpdater.apply(new CopyOnWriteArrayList<>(rescaled));
         }
-        timer.stopTiming();
 
         // Finalise stats and end
-        sequentialStats.imageRescaleStats.taskProgress++;
-        sequentialStats.imageRescaleStats.runtime = timer.getTime();
-        sequentialStats.lastAction = TaskerStats.LastAction.IDLE;
+        stats.imageRescaleStats.taskProgress++;
+        timer.stopTiming();
 
-        totalTimer.startTiming();
-        sequentialStats.totalRuntime = totalTimer.getTime();
+        stats.imageRescaleStats.runtime = timer.getTime();
+        stats.lastAction = TaskerStats.LastAction.IDLE;
 
         @Gui
-        Void gs10 = statsUpdater.apply(sequentialStats);
+        Void gs10 = statsUpdater.apply(stats);
+
+        // All done, check time
+        totalTimer.stopTiming();
+        stats.totalRuntime = totalTimer.getTime();
+
+        @Gui
+        Void gs11 = statsUpdater.apply(stats);
     }
 
     public void performParallel(Function<TaskerStats, Void> statsUpdater, Function<BufferedImage[], Void> imagesUpdater) {
-        @Gui
-        Void sync = statsUpdater.apply(parallelStats);
+
+    }
+
+    public void performParallelPipeline(Function<TaskerStats, Void> statsUpdater, Function<BufferedImage[], Void> imagesUpdater) {
     }
 }

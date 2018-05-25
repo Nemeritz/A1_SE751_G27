@@ -3,6 +3,7 @@ package facegallery.tasks;
 import apt.annotations.Future;
 import apt.annotations.Task;
 import apt.annotations.TaskInfoType;
+import com.jhlabs.image.LensBlurFilter;
 import pu.loopScheduler.*;
 
 import java.awt.image.BufferedImage;
@@ -14,9 +15,10 @@ public class ImageRescaler {
     private BufferedImage[] images;
     private Boolean[] hasFace;
     private BufferedImage[] rescaled;
-    private RescaleOp rescaleOp;
+    private RescaleOp rescaleOp = new RescaleOp(0.3f, 0.0f, null);
+    private LensBlurFilter blurFilter = new LensBlurFilter();
 
-    public ImageRescaler(BufferedImage[] images, Boolean[] hasFace, RescaleOp rescaleOp) {
+    public ImageRescaler(BufferedImage[] images, Boolean[] hasFace) {
         rescaled = new BufferedImage[images.length];
         this.images = images;
         this.hasFace = hasFace;
@@ -85,7 +87,7 @@ public class ImageRescaler {
                         1,
                         2,
                         AbstractLoopScheduler.LoopCondition.LessThan,
-                        LoopSchedulerFactory.LoopSchedulingType.Static
+                        LoopSchedulerFactory.LoopSchedulingType.Dynamic
                 );
 
         @Future(taskType = TaskInfoType.MULTI, taskCount = 2, reduction = "AND")
@@ -152,7 +154,7 @@ public class ImageRescaler {
     private BufferedImage rescale(BufferedImage image, Boolean hasFace) {
         if (image != null) {
             if (!hasFace) {
-                return rescaleOp.filter(image, null);
+                return blurFilter.filter(rescaleOp.filter(image, null), null);
             }
             return image;
         }

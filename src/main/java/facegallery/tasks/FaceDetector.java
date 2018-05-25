@@ -37,7 +37,10 @@ public class FaceDetector {
                 }
             }
         } else {
-            detections = detect(imageBytes);
+            Boolean[] tempDetections = detect(imageBytes);
+            for (int i = 0; i < imageBytes.length; i++) {
+                detections[i] = tempDetections[i];
+            }
         }
 
         return detections;
@@ -55,8 +58,9 @@ public class FaceDetector {
                 readyQueue.offer(i);
             }
         } else {
-            detections = detect(imageBytes);
+            Boolean[] tempDetections = detect(imageBytes);
             for (int i = 0; i < imageBytes.length; i++) {
+                detections[i] = tempDetections[i];
                 readyQueue.offer(i);
             }
         }
@@ -159,7 +163,7 @@ public class FaceDetector {
             return CloudVisionFaceDetector.imageHasFace(byteArrays);
         } catch (Exception e) {
             e.printStackTrace(System.err);
-            return null;
+            return new Boolean[byteArrays.length];
         }
     }
 }
