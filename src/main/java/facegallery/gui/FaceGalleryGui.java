@@ -80,7 +80,6 @@ public class FaceGalleryGui extends JFrame {
     private class pipelineListener implements ActionListener{
         @Override
         public void actionPerformed(ActionEvent e) {
-            System.out.println("ENTERED");
             Tasker tasker = new Tasker();
             //tasker.performParallelPipeline(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages, false);
         }

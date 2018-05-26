@@ -102,7 +102,7 @@ public class FaceDetector {
         try {
             detections[index] = CloudVisionFaceDetector.imageHasFace(imageBytes[index]);
         } catch (Exception e) {
-            System.err.println(e.getLocalizedMessage());
+            e.printStackTrace(System.err);
             detections[index] = false;
         }
 
@@ -114,7 +114,7 @@ public class FaceDetector {
         try {
             detections[index] = CloudVisionFaceDetector.imageHasFace(imageBytes[index]);
         } catch (Exception e) {
-            System.err.println(e.getLocalizedMessage());
+            e.printStackTrace(System.err);
             detections[index] = false;
         } finally {
             readyQueue.offer(index);
