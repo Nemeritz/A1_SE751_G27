@@ -8,6 +8,7 @@ public class AsyncLoopScheduler {
     int workItems;
     int threads;
     int chunkSize;
+    int extra;
     AtomicInteger requestCount = new AtomicInteger(0);
 
     public AsyncLoopScheduler(int globalStart, int globalEnd, int threads) {
@@ -16,6 +17,7 @@ public class AsyncLoopScheduler {
         this.workItems = Math.abs(globalEnd - globalStart);
         this.threads = threads;
         chunkSize = workItems / threads;
+        extra = workItems % threads;
     }
 
     public AsyncLoopRange requestLoopRange() {
@@ -26,8 +28,8 @@ public class AsyncLoopScheduler {
 
         if (requestCount < threads) {
             localStart = globalStart + chunkSize * requestCount;
-            if (requestCount == threads - 1) {
-                localEnd = globalEnd;
+            if (requestCount < extra) {
+                localEnd = localStart + chunkSize + 1;
             } else {
                 localEnd = localStart + chunkSize;
             }
