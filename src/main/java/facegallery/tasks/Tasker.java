@@ -61,7 +61,7 @@ public class Tasker {
         timer.startTiming();
         thumbnailGenerator.run();
 
-        Void gs1 = imagesUpdater.apply(new CopyOnWriteArrayList<>(rescaled));
+        Void gs1 = imagesUpdater.apply(new CopyOnWriteArrayList<>(thumbnails));
 
         // Finalise stats and prepare for next task
         stats.thumbnailGenerateStats.taskProgress = stats.thumbnailGenerateStats.taskTotal;
@@ -133,7 +133,7 @@ public class Tasker {
         stats.lastAction = TaskerStats.LastAction.FILE_READ;
         stats.fileReadStats.taskTotal = imageBytes.length;
         @Gui
-        Void gs0 = statsUpdater.apply(stats);
+        Void gs0 = statsUpdater.apply(new TaskerStats(stats));
 
         // Start the timer and start the 'File Read' task
         timer.startTiming();
@@ -144,7 +144,7 @@ public class Tasker {
         for (int i = 0; i < imageBytes.length; i++) {
             stats.fileReadStats.taskProgress++;
             @Gui
-            Void gs1 = statsUpdater.apply(stats);
+            Void gs1 = statsUpdater.apply(new TaskerStats(stats));
 
             try {
                 readyQueue.take();
@@ -159,7 +159,7 @@ public class Tasker {
         stats.thumbnailGenerateStats.taskTotal = imageBytes.length;
         stats.lastAction = TaskerStats.LastAction.THUMBNAIL;
         @Gui
-        Void gs2 = statsUpdater.apply(stats);
+        Void gs2 = statsUpdater.apply(new TaskerStats(stats));
 
         // Start the timer and start the 'Thumbnail Generate' task
         readyQueue.clear();
@@ -170,7 +170,7 @@ public class Tasker {
         for (int i = 0; i < imageBytes.length; i++) {
             stats.thumbnailGenerateStats.taskProgress++;
             @Gui
-            Void gs3 = statsUpdater.apply(stats);
+            Void gs3 = statsUpdater.apply(new TaskerStats(stats));
 
             try {
                 readyQueue.take();
@@ -199,7 +199,7 @@ public class Tasker {
         for (int i = 0; i < imageBytes.length; i++) {
             stats.faceDetectionStats.taskProgress++;
             @Gui
-            Void gs6 = statsUpdater.apply(stats);
+            Void gs6 = statsUpdater.apply(new TaskerStats(stats));
 
             try {
                 readyQueue.take();
@@ -214,7 +214,7 @@ public class Tasker {
         stats.imageRescaleStats.taskTotal = hasFace.length;
         stats.lastAction = TaskerStats.LastAction.RESCALE;
         @Gui
-        Void gs7 = statsUpdater.apply(stats);
+        Void gs7 = statsUpdater.apply(new TaskerStats(stats));
 
         // Start the timer and start the 'Image Rescale' task
         readyQueue.clear();
@@ -225,7 +225,7 @@ public class Tasker {
         for (int i = 0; i < imageBytes.length; i++) {
             stats.imageRescaleStats.taskProgress++;
             @Gui
-            Void gs8 = statsUpdater.apply(stats);
+            Void gs8 = statsUpdater.apply(new TaskerStats(stats));
 
             try {
                 readyQueue.take();
@@ -243,14 +243,14 @@ public class Tasker {
         stats.lastAction = TaskerStats.LastAction.IDLE;
 
         @Gui
-        Void gs10 = statsUpdater.apply(stats);
+        Void gs10 = statsUpdater.apply(new TaskerStats(stats));
 
         // All done, check time
         totalTimer.stopTiming();
         stats.totalRuntime = totalTimer.getTime();
 
         @Gui
-        Void gs11 = statsUpdater.apply(stats);
+        Void gs11 = statsUpdater.apply(new TaskerStats(stats));
 
         return null;
     }

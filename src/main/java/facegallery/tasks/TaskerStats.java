@@ -27,10 +27,25 @@ public class TaskerStats {
     public TaskerStats() {
     }
 
+    public TaskerStats(TaskerStats clone) {
+        lastAction = clone.lastAction;
+        totalRuntime = clone.totalRuntime;
+        fileReadStats = new Stats(clone.fileReadStats);
+        thumbnailGenerateStats = new Stats(clone.thumbnailGenerateStats);
+        faceDetectionStats = new Stats(clone.faceDetectionStats);
+        imageRescaleStats = new Stats(clone.imageRescaleStats);
+    }
+
     public static class Stats {
         public int taskProgress;
         public int taskTotal;
         public double runtime;
+
+        public Stats(Stats clone) {
+            taskProgress = clone.taskProgress;
+            taskTotal = clone.taskTotal;
+            runtime = clone.runtime;
+        }
 
         public Stats(int taskProgress, int taskTotal, double runtime) {
             this.taskProgress = taskProgress;
