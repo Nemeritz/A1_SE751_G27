@@ -2,6 +2,7 @@ package facegallery.tasks;
 
 import apt.annotations.Future;
 import apt.annotations.Gui;
+import apt.annotations.Task;
 import facegallery.FaceGallery;
 import facegallery.utils.ByteArray;
 import facegallery.utils.Timer;
@@ -16,13 +17,8 @@ import java.util.function.Function;
 public class Tasker {
     private TaskerStats sequentialStats;
     private TaskerStats concurrentStats;
-    private TaskerStats parallelStats;
-    private TaskerStats parallelPipelineStats;
 
     public Void performSequential(Function<TaskerStats, Void> statsUpdater, Function<List<BufferedImage>, Void> imagesUpdater, boolean batchFaceDetect) {
-        Thread t = Thread.currentThread();
-        String name = t.getName();
-        System.out.println("name=" + name);
         // Preparing
         Timer timer = new Timer();
         Timer totalTimer = new Timer();
@@ -111,6 +107,7 @@ public class Tasker {
         return null;
     }
 
+    @Task
     public Void performConcurrent(Function<TaskerStats, Void> statsUpdater, Function<List<BufferedImage>, Void> imagesUpdater, boolean batchFaceDetect) {
         // Preparing
         Timer timer = new Timer();

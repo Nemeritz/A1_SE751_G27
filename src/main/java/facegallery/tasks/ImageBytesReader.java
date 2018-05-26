@@ -6,7 +6,6 @@ import apt.annotations.TaskInfoType;
 import facegallery.utils.AsyncLoopRange;
 import facegallery.utils.AsyncLoopScheduler;
 import facegallery.utils.ByteArray;
-import pu.loopScheduler.ThreadID;
 
 import java.io.File;
 import java.io.IOException;
@@ -92,7 +91,6 @@ public class ImageBytesReader {
     @Task
     private boolean asyncWorker(AsyncLoopScheduler scheduler) {
         AsyncLoopRange range = scheduler.requestLoopRange();
-        System.out.printf("%d thread: %d to %d", ThreadID.getStaticID(), range.loopStart, range.loopEnd);
 
         for (int i = range.loopStart; i < range.loopEnd; i += 1) {
             try {
@@ -109,7 +107,6 @@ public class ImageBytesReader {
     @Task
     private boolean asyncWorker(AsyncLoopScheduler scheduler, BlockingQueue<Integer> readyQueue) {
         AsyncLoopRange range = scheduler.requestLoopRange();
-        System.out.printf("%d thread: %d to %d", ThreadID.getStaticID(), range.loopStart, range.loopEnd);
 
         for (int i = range.loopStart; i < range.loopEnd; i += 1) {
             try {
@@ -120,7 +117,6 @@ public class ImageBytesReader {
             } finally {
                 readyQueue.offer(i);
             }
-            System.out.println("Image Read " + Integer.toString(i) + " is " + Boolean.toString(imageBytes[i] != null));
         }
 
         return true;
