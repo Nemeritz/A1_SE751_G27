@@ -3,19 +3,14 @@ package facegallery;
 import apt.annotations.InitParaTask;
 import apt.annotations.TaskScheduingPolicy;
 import facegallery.gui.FaceGalleryGui;
-import facegallery.tasks.FaceDetector;
-import facegallery.tasks.ImageBytesReader;
+import facegallery.tasks.ParallelTasker;
 import facegallery.tasks.Tasker;
 import facegallery.tasks.TaskerStats;
-import facegallery.utils.ByteArray;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 
 public class FaceGallery {
@@ -29,7 +24,7 @@ public class FaceGallery {
             String[] prompt = {
                     "Select operating mode:",
                     "\t1. CLI-Sequential",
-                    "\t2. CLI-Parallel",
+                    "\t2. CLI-Concurrent",
                     "\t3. CLI-Parallel",
                     "\t4. CLI-ParallelPipeline",
                     "\t5. GUI",
@@ -51,15 +46,20 @@ public class FaceGallery {
                     runSequential();
                     break;
                 case 2:
-                    runParallel();
+                    runConcurrent();
                     break;
                 case 3:
+                    runParallel();
+                    break;
+                case 4:
+                    runParallelPipeline();
+                    break;
+                case 5:
                     runGui();
                     break;
                 default:
                     break;
             }
-            System.exit(0);
         }
 	}
 
@@ -79,7 +79,7 @@ public class FaceGallery {
                 stats.fileReadStats.runtime, stats.fileReadStats.taskProgress, stats.fileReadStats.taskTotal,
                 stats.thumbnailGenerateStats.runtime, stats.thumbnailGenerateStats.taskProgress, stats.thumbnailGenerateStats.taskTotal,
                 stats.faceDetectionStats.runtime, stats.faceDetectionStats.taskProgress, stats.faceDetectionStats.taskTotal,
-                stats.imageRescaleStats.runtime, stats.imageRescaleStats.taskProgress, stats.imageRescaleStats.taskProgress
+                stats.imageRescaleStats.runtime, stats.imageRescaleStats.taskProgress, stats.imageRescaleStats.taskTotal
         );
         return null;
     };
@@ -96,41 +96,16 @@ public class FaceGallery {
 
     public static void runConcurrent() {
         Tasker tasker = new Tasker();
-        tasker.performConcurrent(FaceGallery::statsPrinter, FaceGallery::imagePrinter, false);
+        tasker.performConcurrent(FaceGallery::statsPrinter, FaceGallery::imagePrinter, true);
     }
 
     public static void runParallel() {
-        // Image reading
-        ImageBytesReader imageBytesReader = new ImageBytesReader(TEST_DATASET_DIR);
-        File[] fileList = imageBytesReader.getFileList();
-        BlockingQueue<Integer> imageBytesReady = imageBytesReader.runAsync();
-        ByteArray[] imageBytes = imageBytesReader.getImageBytes();
+        ParallelTasker tasker = new ParallelTasker();
+        tasker.performParallel(FaceGallery::statsPrinter, FaceGallery::imagePrinter);
+    }
 
+    public static void runParallelPipeline() {
 
-        // Cloud Vision Detection
-        FaceDetector faceDetector = new FaceDetector(imageBytes);
-        BlockingQueue<Integer> faceDetectionReady = new LinkedBlockingQueue<>();
-        faceDetector.runAsyncPipeline(imageBytesReady, faceDetectionReady);
-        Boolean[] detections = faceDetector.getDetections();
-
-        System.out.println("Async check for null at first... should be all true...");
-        for (int i = 0; i < detections.length; i++) {
-            System.out.println(fileList[i].getName() + ": " + Boolean.toString(detections[i] == null));
-        }
-
-        System.out.println("Waiting... should be all false...");
-        for (int i = 0; i < imageBytes.length; i++) {
-            try {
-                System.out.println(fileList[i].getName() + ": " + Boolean.toString(detections[faceDetectionReady.take()] == null));
-            } catch (InterruptedException ignore) {
-
-            }
-        }
-
-        System.out.println("And now results...");
-        for (int i = 0; i < imageBytes.length; i++) {
-            System.out.println(fileList[i].getName() + ": " + Boolean.toString(detections[i]));
-        }
     }
 
     public static void runGui() {

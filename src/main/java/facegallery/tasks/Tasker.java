@@ -149,9 +149,7 @@ public class Tasker {
         }
 
         // Finalise stats and prepare for next task
-        stats.fileReadStats.taskProgress++;
         timer.stopTiming();
-
         stats.fileReadStats.runtime = timer.getTime();
         stats.thumbnailGenerateStats.taskTotal = imageBytes.length;
         stats.lastAction = TaskerStats.LastAction.THUMBNAIL;
@@ -180,9 +178,7 @@ public class Tasker {
         }
 
         // Finalise stats and prepare for next task
-        stats.thumbnailGenerateStats.taskProgress++;
         timer.stopTiming();
-
         stats.thumbnailGenerateStats.runtime = timer.getTime();
         stats.faceDetectionStats.taskTotal = imageBytes.length;
         stats.lastAction = TaskerStats.LastAction.FACE_DETECT;
@@ -208,9 +204,7 @@ public class Tasker {
         }
 
         // Finalise stats and prepare for next task
-        stats.faceDetectionStats.taskProgress++;
         timer.stopTiming();
-
         stats.faceDetectionStats.runtime = timer.getTime();
         stats.imageRescaleStats.taskTotal = hasFace.length;
         stats.lastAction = TaskerStats.LastAction.RESCALE;
@@ -239,9 +233,7 @@ public class Tasker {
         }
 
         // Finalise stats and end
-        stats.imageRescaleStats.taskProgress++;
         timer.stopTiming();
-
         stats.imageRescaleStats.runtime = timer.getTime();
         stats.lastAction = TaskerStats.LastAction.IDLE;
 
@@ -254,12 +246,5 @@ public class Tasker {
 
         @Gui
         Void gs11 = statsUpdater.apply(stats);
-    }
-
-    public void performParallel(Function<TaskerStats, Void> statsUpdater, Function<BufferedImage[], Void> imagesUpdater) {
-
-    }
-
-    public void performParallelPipeline(Function<TaskerStats, Void> statsUpdater, Function<BufferedImage[], Void> imagesUpdater) {
     }
 }
