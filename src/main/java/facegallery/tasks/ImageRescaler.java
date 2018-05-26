@@ -4,7 +4,8 @@ import apt.annotations.Future;
 import apt.annotations.Task;
 import apt.annotations.TaskInfoType;
 import com.jhlabs.image.LensBlurFilter;
-import pu.loopScheduler.*;
+import facegallery.utils.AsyncLoopRange;
+import facegallery.utils.AsyncLoopScheduler;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
@@ -63,59 +64,35 @@ public class ImageRescaler {
     public BlockingQueue<Integer> runAsync() {
         BlockingQueue<Integer> readyQueue = new LinkedBlockingQueue<>();
 
-        LoopScheduler scheduler = LoopSchedulerFactory
-                .createLoopScheduler(
-                        0,
-                        images.length,
-                        1,
-                        2,
-                        AbstractLoopScheduler.LoopCondition.LessThan,
-                        LoopSchedulerFactory.LoopSchedulingType.Static
-                );
+        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, images.length, 8);
 
-        @Future(taskType = TaskInfoType.MULTI, taskCount = 2, reduction = "AND")
+        @Future(taskType = TaskInfoType.MULTI, taskCount = 8, reduction = "AND")
         Boolean sync = asyncWorker(scheduler, readyQueue);
 
         return readyQueue;
     }
 
     public Boolean runAsync(Void wait) {
-        LoopScheduler scheduler = LoopSchedulerFactory
-                .createLoopScheduler(
-                        0,
-                        images.length,
-                        1,
-                        2,
-                        AbstractLoopScheduler.LoopCondition.LessThan,
-                        LoopSchedulerFactory.LoopSchedulingType.Dynamic
-                );
+        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, images.length, 8);
 
-        @Future(taskType = TaskInfoType.MULTI, taskCount = 2, reduction = "AND")
+        @Future(taskType = TaskInfoType.MULTI, taskCount = 8, reduction = "AND")
         Boolean sync = asyncWorker(scheduler);
 
         return sync;
     }
 
     public void runAsyncPipeline(BlockingQueue<Integer> inputReady, BlockingQueue<Integer> readyQueue) {
-        LoopScheduler scheduler = LoopSchedulerFactory
-                .createLoopScheduler(
-                        0,
-                        images.length,
-                        1,
-                        2,
-                        AbstractLoopScheduler.LoopCondition.LessThan,
-                        LoopSchedulerFactory.LoopSchedulingType.Static
-                );
+        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, images.length, 8);
 
-        @Future(taskType = TaskInfoType.MULTI, taskCount = 2, reduction = "AND")
+        @Future(taskType = TaskInfoType.MULTI, taskCount = 8, reduction = "AND")
         Boolean sync = asyncPipelineWorker(scheduler, inputReady, readyQueue);
     }
 
     @Task
-    private Boolean asyncWorker(LoopScheduler scheduler) {
-        LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
+    private Boolean asyncWorker(AsyncLoopScheduler scheduler) {
+        AsyncLoopRange range = scheduler.requestLoopRange();
 
-        for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
+        for (int i = range.loopStart; i < range.loopEnd; i += 1) {
             rescaled[i] = rescale(images[i], hasFace[i]);
         }
 
@@ -123,10 +100,10 @@ public class ImageRescaler {
     }
 
     @Task
-    private Boolean asyncWorker(LoopScheduler scheduler, BlockingQueue<Integer> readyQueue) {
-        LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
+    private Boolean asyncWorker(AsyncLoopScheduler scheduler, BlockingQueue<Integer> readyQueue) {
+        AsyncLoopRange range = scheduler.requestLoopRange();
 
-        for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
+        for (int i = range.loopStart; i < range.loopEnd; i += 1) {
             rescaled[i] = rescale(images[i], hasFace[i]);
             readyQueue.offer(i);
         }
@@ -135,10 +112,10 @@ public class ImageRescaler {
     }
 
     @Task
-    private Boolean asyncPipelineWorker(LoopScheduler scheduler, BlockingQueue<Integer> inputReady, BlockingQueue<Integer> outputReady) {
-        LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
+    private Boolean asyncPipelineWorker(AsyncLoopScheduler scheduler, BlockingQueue<Integer> inputReady, BlockingQueue<Integer> outputReady) {
+        AsyncLoopRange range = scheduler.requestLoopRange();
 
-        for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
+        for (int i = range.loopStart; i < range.loopEnd; i += 1) {
             try {
                 Integer nextIndex = inputReady.take();
                 rescaled[nextIndex] = rescale(images[nextIndex], hasFace[nextIndex]);

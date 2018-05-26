@@ -3,6 +3,8 @@ package facegallery.tasks;
 import apt.annotations.Future;
 import apt.annotations.Task;
 import apt.annotations.TaskInfoType;
+import facegallery.utils.AsyncLoopRange;
+import facegallery.utils.AsyncLoopScheduler;
 import facegallery.utils.ByteArray;
 import pu.loopScheduler.*;
 
@@ -63,59 +65,37 @@ public class ThumbnailGenerator {
     public BlockingQueue<Integer> runAsync() {
         BlockingQueue<Integer> readyQueue = new LinkedBlockingQueue<>();
 
-        LoopScheduler scheduler = LoopSchedulerFactory
-                .createLoopScheduler(
-                        0,
-                        imageBytes.length,
-                        1,
-                        2,
-                        AbstractLoopScheduler.LoopCondition.LessThan,
-                        LoopSchedulerFactory.LoopSchedulingType.Static
-                );
+        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, imageBytes.length, 8);
 
-        @Future(taskType = TaskInfoType.MULTI, taskCount = 2, reduction = "AND")
+        @Future(taskType = TaskInfoType.MULTI, taskCount = 8, reduction = "AND")
         Boolean sync = asyncWorker(scheduler, readyQueue);
 
         return readyQueue;
     }
 
     public Boolean runAsync(Void wait) {
-        LoopScheduler scheduler = LoopSchedulerFactory
-                .createLoopScheduler(
-                        0,
-                        imageBytes.length,
-                        1,
-                        2,
-                        AbstractLoopScheduler.LoopCondition.LessThan,
-                        LoopSchedulerFactory.LoopSchedulingType.Static
-                );
+        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, imageBytes.length, 8);
 
-        @Future(taskType = TaskInfoType.MULTI, taskCount = 2, reduction = "AND")
+        @Future(taskType = TaskInfoType.MULTI, taskCount = 8, reduction = "AND")
         Boolean sync = asyncWorker(scheduler);
 
         return sync;
     }
 
     public void runAsyncPipeline(BlockingQueue<Integer> inputReady, BlockingQueue<Integer> readyQueue) {
-        LoopScheduler scheduler = LoopSchedulerFactory
-                .createLoopScheduler(
-                        0,
-                        imageBytes.length,
-                        1,
-                        2,
-                        AbstractLoopScheduler.LoopCondition.LessThan,
-                        LoopSchedulerFactory.LoopSchedulingType.Static
-                );
+        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, imageBytes.length, 8);
 
-        @Future(taskType = TaskInfoType.MULTI, taskCount = 2, reduction = "AND")
+        @Future(taskType = TaskInfoType.MULTI, taskCount = 8, reduction = "AND")
         Boolean sync = asyncPipelineWorker(scheduler, inputReady, readyQueue);
     }
 
     @Task
-    private Boolean asyncWorker(LoopScheduler scheduler) {
-        LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
+    private Boolean asyncWorker(AsyncLoopScheduler scheduler) {
+        AsyncLoopRange range = scheduler.requestLoopRange();
 
-        for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
+        System.out.printf("%d thread: %d to %d%n", ThreadID.getStaticID(), range.loopStart, range.loopEnd);
+
+        for (int i = range.loopStart; i < range.loopEnd; i += 1) {
             resized[i] = resize(imageBytes[i]);
         }
 
@@ -123,10 +103,12 @@ public class ThumbnailGenerator {
     }
 
     @Task
-    private Boolean asyncWorker(LoopScheduler scheduler, BlockingQueue<Integer> readyQueue) {
-        LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
+    private Boolean asyncWorker(AsyncLoopScheduler scheduler, BlockingQueue<Integer> readyQueue) {
+        AsyncLoopRange range = scheduler.requestLoopRange();
 
-        for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
+        System.out.printf("%d thread: %d to %d%n", ThreadID.getStaticID(), range.loopStart, range.loopEnd);
+
+        for (int i = range.loopStart; i < range.loopEnd; i += 1) {
             resized[i] = resize(imageBytes[i]);
             readyQueue.offer(i);
         }
@@ -135,10 +117,10 @@ public class ThumbnailGenerator {
     }
 
     @Task
-    private Boolean asyncPipelineWorker(LoopScheduler scheduler, BlockingQueue<Integer> inputReady, BlockingQueue<Integer> outputReady) {
-        LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
+    private Boolean asyncPipelineWorker(AsyncLoopScheduler scheduler, BlockingQueue<Integer> inputReady, BlockingQueue<Integer> outputReady) {
+        AsyncLoopRange range = scheduler.requestLoopRange();
 
-        for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
+        for (int i = range.loopStart; i < range.loopEnd; i += 1) {
             try {
                 Integer nextIndex = inputReady.take();
                 resized[nextIndex] = resize(imageBytes[nextIndex]);

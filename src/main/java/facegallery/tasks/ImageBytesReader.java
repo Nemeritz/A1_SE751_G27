@@ -3,8 +3,10 @@ package facegallery.tasks;
 import apt.annotations.Future;
 import apt.annotations.Task;
 import apt.annotations.TaskInfoType;
+import facegallery.utils.AsyncLoopRange;
+import facegallery.utils.AsyncLoopScheduler;
 import facegallery.utils.ByteArray;
-import pu.loopScheduler.*;
+import pu.loopScheduler.ThreadID;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,34 +65,18 @@ public class ImageBytesReader {
     public BlockingQueue<Integer> runAsync() {
         BlockingQueue<Integer> readyQueue = new LinkedBlockingQueue<>();
 
-        LoopScheduler scheduler = LoopSchedulerFactory
-                .createLoopScheduler(
-                        0,
-                        imageBytes.length,
-                        1,
-                        2,
-                        AbstractLoopScheduler.LoopCondition.LessThan,
-                        LoopSchedulerFactory.LoopSchedulingType.Static
-                );
+        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, imageBytes.length, 8);
 
-        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 2, reduction = "AND")
+        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 8, reduction = "AND")
         Boolean sync = asyncWorker(scheduler, readyQueue);
 
         return readyQueue;
     }
 
     public Boolean runAsync(Void wait) {
-        LoopScheduler scheduler = LoopSchedulerFactory
-                .createLoopScheduler(
-                        0,
-                        imageBytes.length,
-                        1,
-                        2,
-                        AbstractLoopScheduler.LoopCondition.LessThan,
-                        LoopSchedulerFactory.LoopSchedulingType.Static
-                );
+        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, imageBytes.length, 8);
 
-        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 2, reduction = "AND")
+        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 8, reduction = "AND")
         Boolean sync = asyncWorker(scheduler);
 
         return sync;
@@ -104,10 +90,11 @@ public class ImageBytesReader {
     }
 
     @Task
-    private boolean asyncWorker(LoopScheduler scheduler) {
-        LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
+    private boolean asyncWorker(AsyncLoopScheduler scheduler) {
+        AsyncLoopRange range = scheduler.requestLoopRange();
+        System.out.printf("%d thread: %d to %d", ThreadID.getStaticID(), range.loopStart, range.loopEnd);
 
-        for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
+        for (int i = range.loopStart; i < range.loopEnd; i += 1) {
             try {
                 imageBytes[i] = new ByteArray(Files.readAllBytes(fileList[i].toPath()));
             } catch (IOException e) {
@@ -120,10 +107,11 @@ public class ImageBytesReader {
     }
 
     @Task
-    private boolean asyncWorker(LoopScheduler scheduler, BlockingQueue<Integer> readyQueue) {
-        LoopRange range = scheduler.getChunk(ThreadID.getStaticID());
+    private boolean asyncWorker(AsyncLoopScheduler scheduler, BlockingQueue<Integer> readyQueue) {
+        AsyncLoopRange range = scheduler.requestLoopRange();
+        System.out.printf("%d thread: %d to %d", ThreadID.getStaticID(), range.loopStart, range.loopEnd);
 
-        for (int i = range.loopStart; i < range.loopEnd; i += range.localStride) {
+        for (int i = range.loopStart; i < range.loopEnd; i += 1) {
             try {
                 imageBytes[i] = new ByteArray(Files.readAllBytes(fileList[i].toPath()));
             } catch (IOException e) {
@@ -132,6 +120,7 @@ public class ImageBytesReader {
             } finally {
                 readyQueue.offer(i);
             }
+            System.out.println("Image Read " + Integer.toString(i) + " is " + Boolean.toString(imageBytes[i] != null));
         }
 
         return true;

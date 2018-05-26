@@ -19,7 +19,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class FaceGalleryGui extends JFrame {
 
     static private ScrollPane scrollPane = new ScrollPane();
-    static private JPanel buttonBar = new JPanel();
+    static private JPanel imageGrid = new JPanel();
     static private JButton parallel,sequential,concurrent,pipeline,reset;
     static private JPanel controls = new JPanel();
     static private JPanel controlPanel = new JPanel();
@@ -93,7 +93,7 @@ public class FaceGalleryGui extends JFrame {
             timeThumb.setText("");
             timeBlur.setText("");
             totalTime.setText("");
-            buttonBar.removeAll();
+            imageGrid.removeAll();
         }
     }
 
@@ -118,10 +118,10 @@ public class FaceGalleryGui extends JFrame {
         labelTextBlur = new JLabel("time taken to distort Images:");
         labelTotalTime = new JLabel("Total time:");
         currentAction = new JLabel("");
-        buttonBar.setLayout(new GridLayout(0,4,5,5));
-        parallel = new JButton("parallel");
+        imageGrid.setLayout(new GridLayout(0,4,5,5));
         sequential = new JButton("sequential");
         concurrent = new JButton("concurrent");
+        parallel = new JButton("parallel");
         pipeline = new JButton("pipeline");
         reset = new JButton("reset");
         parallel.addActionListener(new parallelListener());
@@ -148,7 +148,7 @@ public class FaceGalleryGui extends JFrame {
         controls.add(totalTime);
         controls.add(currentAction);
         controlPanel.add(controls,BorderLayout.SOUTH);
-        scrollPane.add(buttonBar);
+        scrollPane.add(imageGrid);
 
         setLayout(new GridLayout(1,2));
 
@@ -175,12 +175,12 @@ public class FaceGalleryGui extends JFrame {
     }
 
     public static Void updateImages(List<BufferedImage> imageList) {
-        buttonBar.removeAll();
+        imageGrid.removeAll();
         for (BufferedImage image : imageList) {
             BufferedImage setImage = image == null ? loadingImage : image;
             ImageIcon ii = new ImageIcon(setImage);
             JLabel imageLabel = new JLabel(ii);
-            buttonBar.add(imageLabel);
+            imageGrid.add(imageLabel);
         }
 
         return null;

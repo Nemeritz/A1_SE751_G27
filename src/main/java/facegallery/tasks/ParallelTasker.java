@@ -19,6 +19,7 @@ public class ParallelTasker {
     private TaskerStats parallelPipelineStats;
 
     private Void fileRead(Timer timer, ImageBytesReader imageBytesReader, ByteArray[] imageBytes, Function<TaskerStats, Void> statsUpdater) {
+        System.out.println("Started file read task.");
         // Set stats to file read
         stats.lastAction = TaskerStats.LastAction.FILE_READ;
         stats.fileReadStats.taskTotal = imageBytes.length;
@@ -53,6 +54,7 @@ public class ParallelTasker {
     }
 
     private Void thumbnailGenerate(Timer timer, ThumbnailGenerator thumbnailGenerator, ByteArray[] imageBytes, BufferedImage[] thumbnails, Function<TaskerStats, Void> statsUpdater, Function<List<BufferedImage>, Void> imagesUpdater) {
+        System.out.println("Started thumbnail generate task.");
         stats.thumbnailGenerateStats.taskTotal = imageBytes.length;
         stats.lastAction = TaskerStats.LastAction.THUMBNAIL;
 
