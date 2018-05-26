@@ -92,7 +92,7 @@ public class ImageRescaler {
     @Task
     private Boolean asyncWorker(AsyncLoopScheduler scheduler) {
         AsyncLoopRange range = scheduler.requestLoopRange();
-        System.out.printf("Thread %d: %d to %d%n", ThreadID.getStaticID(), range.loopStart, range.loopEnd);
+//        System.out.printf("Thread %d: %d to %d%n", ThreadID.getStaticID(), range.loopStart, range.loopEnd);
         for (int i = range.loopStart; i < range.loopEnd; i += 1) {
             rescaled[i] = rescale(images[i], hasFace[i]);
         }
@@ -103,8 +103,9 @@ public class ImageRescaler {
     @Task
     private Boolean asyncWorker(AsyncLoopScheduler scheduler, BlockingQueue<Integer> readyQueue) {
         AsyncLoopRange range = scheduler.requestLoopRange();
-        System.out.printf("Thread %d: %d to %d%n", ThreadID.getStaticID(), range.loopStart, range.loopEnd);
+//        System.out.printf("Thread %d: %d to %d%n", ThreadID.getStaticID(), range.loopStart, range.loopEnd);
         for (int i = range.loopStart; i < range.loopEnd; i += 1) {
+//            System.out.println("working " + i);
             rescaled[i] = rescale(images[i], hasFace[i]);
             readyQueue.offer(i);
         }

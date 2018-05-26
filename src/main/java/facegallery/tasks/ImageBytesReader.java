@@ -121,4 +121,8 @@ public class ImageBytesReader {
 
         return true;
     }
+
+    public int getFileLength() {
+        return this.fileList.length;
+    }
 }

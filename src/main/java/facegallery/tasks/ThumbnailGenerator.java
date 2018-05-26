@@ -6,6 +6,7 @@ import apt.annotations.TaskInfoType;
 import facegallery.utils.AsyncLoopRange;
 import facegallery.utils.AsyncLoopScheduler;
 import facegallery.utils.ByteArray;
+import pu.loopScheduler.ThreadID;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -103,7 +104,9 @@ public class ThumbnailGenerator {
     private Boolean asyncWorker(AsyncLoopScheduler scheduler, BlockingQueue<Integer> readyQueue) {
         AsyncLoopRange range = scheduler.requestLoopRange();
 
+        System.out.printf("Thread %d: %d to %d%n", ThreadID.getStaticID(), range.loopStart, range.loopEnd);
         for (int i = range.loopStart; i < range.loopEnd; i += 1) {
+            System.out.println("working " + i);
             resized[i] = resize(imageBytes[i]);
             readyQueue.offer(i);
         }
@@ -146,6 +149,8 @@ public class ThumbnailGenerator {
             Graphics2D graphics2D = bufferedImage.createGraphics();
             graphics2D.setComposite(AlphaComposite.Src);
 
+            System.out.println("Width: " + targetWidth + "Height: " + targetHeight);
+
             //below three lines are for RenderingHints for better image quality at cost of higher processing time
             graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BILINEAR);
             graphics2D.setRenderingHint(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY);
@@ -153,6 +158,8 @@ public class ThumbnailGenerator {
 
             graphics2D.drawImage(inputImage, 0, 0, targetWidth, targetHeight, null);
             graphics2D.dispose();
+
+            System.out.println("resized");
             return bufferedImage;
         }
 
