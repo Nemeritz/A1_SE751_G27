@@ -161,7 +161,7 @@ public class ParallelTasker {
     private Void rescale(Function<TaskerStats, Void> statsUpdater, Function<List<BufferedImage>, Void> imagesUpdater) {
         System.out.println("Started image rescale task.");
 
-        Timer timer = timers.get(4);
+        Timer timer = timers.get(3);
 
         stats.imageRescaleStats.taskTotal = hasFace.length;
         stats.lastAction = TaskerStats.LastAction.RESCALE;
@@ -201,7 +201,7 @@ public class ParallelTasker {
     }
 
     @Task
-    public void performParallel(Function<TaskerStats, Void> statsUpdater, Function<List<BufferedImage>, Void> imagesUpdater) {
+    public Void performParallel(Function<TaskerStats, Void> statsUpdater, Function<List<BufferedImage>, Void> imagesUpdater) {
         stats = new TaskerStats();
         totalTimer.startTiming();
 
@@ -225,5 +225,7 @@ public class ParallelTasker {
 
         @Gui
         Void gs11 = statsUpdater.apply(new TaskerStats(stats));
+
+        return null;
     }
 }

@@ -53,7 +53,9 @@ public class FaceGalleryGui extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             ParallelTasker tasker = new ParallelTasker();
-            tasker.performParallel(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages);
+
+            @Future
+            Void t = tasker.performParallel(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages);
         }
     }
 
