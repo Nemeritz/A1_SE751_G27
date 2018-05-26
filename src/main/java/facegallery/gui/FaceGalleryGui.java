@@ -52,7 +52,7 @@ public class FaceGalleryGui extends JFrame {
     static JLabel labelTextBlur;
     static JLabel labelTotalTime;
     static JLabel currentAction;
-    static JProgressBar progressBar;
+    static JProgressBar progressBar, filesBar, thumbBar, detectBar, distortBar;
     static BufferedImage loadingImage;
     static Lock delayLock = new ReentrantLock();
 
@@ -103,6 +103,10 @@ public class FaceGalleryGui extends JFrame {
             imageGrid.revalidate();
             imageGrid.repaint();
             progressBar.setValue(0);
+            filesBar.setValue(0);
+            thumbBar.setValue(0);
+            distortBar.setValue(0);
+            detectBar.setValue(0);
         }
     }
 
@@ -118,6 +122,14 @@ public class FaceGalleryGui extends JFrame {
 
         progressBar = new JProgressBar(0, files.getFileLength() * 4);
         progressBar.setStringPainted(true);
+        filesBar = new JProgressBar(0, files.getFileLength());
+        filesBar.setStringPainted(true);
+        detectBar = new JProgressBar(0, files.getFileLength());
+        detectBar.setStringPainted(true);
+        distortBar = new JProgressBar(0, files.getFileLength());
+        distortBar.setStringPainted(true);
+        thumbBar = new JProgressBar(0, files.getFileLength());
+        thumbBar.setStringPainted(true);
         labelTextImages = new JLabel("File Reading :");
         labelTextFaces = new JLabel("Face Detection :");
         timeParallelFiles = new JLabel("  ");
@@ -178,6 +190,18 @@ public class FaceGalleryGui extends JFrame {
         controls.add(concurrent);
         controls.add(parallel);
         controls.add(reset);
+        controls.add(new JLabel("File Progress: "));
+        controls.add(new JLabel("Thumbnail Progress: "));
+        controls.add(new JLabel("Detection Progress: "));
+        controls.add(new JLabel("Distortion Progress: "));
+        controls.add(filesBar);
+        controls.add(thumbBar);
+        controls.add(detectBar);
+        controls.add(distortBar);
+        controls.add(new JLabel("Total Progress: "));
+        controls.add(new JLabel("                "));
+        controls.add(new JLabel("                "));
+        controls.add(new JLabel("                "));
         controls.add(progressBar);
         controlPanel.add(controls,BorderLayout.SOUTH);
         scrollPane.add(imageGrid);
@@ -226,7 +250,10 @@ public class FaceGalleryGui extends JFrame {
                 break;
         }
         progressBar.setValue(stats.faceDetectionStats.taskProgress + stats.imageRescaleStats.taskProgress + stats.thumbnailGenerateStats.taskProgress + stats.fileReadStats.taskProgress);
-
+        detectBar.setValue(stats.faceDetectionStats.taskProgress);
+        filesBar.setValue(stats.fileReadStats.taskProgress);
+        thumbBar.setValue(stats.thumbnailGenerateStats.taskProgress);
+        distortBar.setValue(stats.imageRescaleStats.taskProgress);
         return null;
     }
 

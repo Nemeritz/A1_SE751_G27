@@ -149,8 +149,6 @@ public class ThumbnailGenerator {
             Graphics2D graphics2D = bufferedImage.createGraphics();
             graphics2D.setComposite(AlphaComposite.Src);
 
-            System.out.println("Width: " + targetWidth + "Height: " + targetHeight);
-
             //below three lines are for RenderingHints for better image quality at cost of higher processing time
             graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BILINEAR);
             graphics2D.setRenderingHint(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY);
@@ -159,7 +157,6 @@ public class ThumbnailGenerator {
             graphics2D.drawImage(inputImage, 0, 0, targetWidth, targetHeight, null);
             graphics2D.dispose();
 
-            System.out.println("resized");
             return bufferedImage;
         }
 
