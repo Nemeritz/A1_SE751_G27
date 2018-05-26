@@ -27,10 +27,12 @@ public class AsyncLoopScheduler {
         int requestCount = this.requestCount.getAndAdd(1);
 
         if (requestCount < threads) {
-            localStart = globalStart + chunkSize * requestCount;
+            localStart = globalStart;
             if (requestCount < extra) {
+                localStart += (chunkSize + 1) * requestCount;
                 localEnd = localStart + chunkSize + 1;
             } else {
+                localStart += (chunkSize + 1) * extra + chunkSize * requestCount - extra;
                 localEnd = localStart + chunkSize;
             }
         }

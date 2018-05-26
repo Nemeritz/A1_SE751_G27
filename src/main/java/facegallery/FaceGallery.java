@@ -109,18 +109,13 @@ public class FaceGallery {
     }
 
     public static void runGui() {
+        FaceGalleryGui app = new FaceGalleryGui();
         @Gui
-        Void t = displayGui();
+        Void t = displayGui(app);
     }
 
-    private static Void displayGui() {
-        FaceGalleryGui app = new FaceGalleryGui();
+    private static Void displayGui(FaceGalleryGui app) {
         app.setVisible(true);
-
-        Thread t = Thread.currentThread();
-        String name = t.getName();
-        System.out.println("name=" + name);
-
         return null;
     }
 }
