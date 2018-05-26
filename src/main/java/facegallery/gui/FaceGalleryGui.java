@@ -1,13 +1,11 @@
 package facegallery.gui;
-import facegallery.FaceGallery;
 
 import apt.annotations.Future;
-import facegallery.tasks.FaceDetector;
 import facegallery.FaceGallery;
+import facegallery.tasks.FaceDetector;
 import facegallery.tasks.ImageBytesReader;
-import facegallery.utils.ByteArray;
-import facegallery.utils.MyImageView;
-import facegallery.tasks.*;
+import facegallery.tasks.Tasker;
+import facegallery.tasks.TaskerStats;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,9 +62,10 @@ public class FaceGalleryGui extends JFrame {
     private class sequentialListener implements ActionListener{
         @Override
         public void actionPerformed(ActionEvent e) {
-            System.out.println("ENTERED");
             Tasker tasker = new Tasker();
-            tasker.performSequential(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages, false);
+
+            @Future
+            Void t0 = tasker.performSequential(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages, true);
         }
     }
 
@@ -75,7 +74,9 @@ public class FaceGalleryGui extends JFrame {
         public void actionPerformed(ActionEvent e) {
             System.out.println("ENTERED");
             Tasker tasker = new Tasker();
-            tasker.performConcurrent(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages, false);
+
+            @Future
+            Void t1 = tasker.performConcurrent(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages, true);
         }
     }
 

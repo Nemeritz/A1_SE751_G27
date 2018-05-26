@@ -1,5 +1,6 @@
 package facegallery;
 
+import apt.annotations.Gui;
 import apt.annotations.InitParaTask;
 import apt.annotations.TaskScheduingPolicy;
 import facegallery.gui.FaceGalleryGui;
@@ -7,7 +8,6 @@ import facegallery.tasks.ParallelTasker;
 import facegallery.tasks.Tasker;
 import facegallery.tasks.TaskerStats;
 
-import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.Scanner;
@@ -109,12 +109,18 @@ public class FaceGallery {
     }
 
     public static void runGui() {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                FaceGalleryGui app = new FaceGalleryGui();
-                app.setVisible(true);
-            }
-        });
-        while(true);
+        @Gui
+        Void t = displayGui();
+    }
+
+    private static Void displayGui() {
+        FaceGalleryGui app = new FaceGalleryGui();
+        app.setVisible(true);
+
+        Thread t = Thread.currentThread();
+        String name = t.getName();
+        System.out.println("name=" + name);
+
+        return null;
     }
 }

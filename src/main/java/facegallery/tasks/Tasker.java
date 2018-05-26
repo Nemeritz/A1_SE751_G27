@@ -19,7 +19,10 @@ public class Tasker {
     private TaskerStats parallelStats;
     private TaskerStats parallelPipelineStats;
 
-    public void performSequential(Function<TaskerStats, Void> statsUpdater, Function<List<BufferedImage>, Void> imagesUpdater, boolean batchFaceDetect) {
+    public Void performSequential(Function<TaskerStats, Void> statsUpdater, Function<List<BufferedImage>, Void> imagesUpdater, boolean batchFaceDetect) {
+        Thread t = Thread.currentThread();
+        String name = t.getName();
+        System.out.println("name=" + name);
         // Preparing
         Timer timer = new Timer();
         Timer totalTimer = new Timer();
@@ -104,9 +107,11 @@ public class Tasker {
         stats.totalRuntime = totalTimer.getTime();
 
         Void gs6 = statsUpdater.apply(stats);
+
+        return null;
     }
 
-    public void performConcurrent(Function<TaskerStats, Void> statsUpdater, Function<List<BufferedImage>, Void> imagesUpdater, boolean batchFaceDetect) {
+    public Void performConcurrent(Function<TaskerStats, Void> statsUpdater, Function<List<BufferedImage>, Void> imagesUpdater, boolean batchFaceDetect) {
         // Preparing
         Timer timer = new Timer();
         Timer totalTimer = new Timer();
@@ -246,5 +251,7 @@ public class Tasker {
 
         @Gui
         Void gs11 = statsUpdater.apply(stats);
+
+        return null;
     }
 }
