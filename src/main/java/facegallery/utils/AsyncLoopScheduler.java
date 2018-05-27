@@ -32,15 +32,14 @@ public class AsyncLoopScheduler {
                 localStart += (chunkSize + 1) * requestCount;
                 localEnd = localStart + chunkSize + 1;
             } else {
-                localStart += (chunkSize + 1) * extra + chunkSize * requestCount - extra;
-                localEnd = localStart + chunkSize;
+                localStart += (chunkSize + 1) * extra + chunkSize * (requestCount - extra);
+                    localEnd = localStart + chunkSize;
             }
         }
         else {
             localStart = 0;
             localEnd = 0;
         }
-
         return new AsyncLoopRange(localStart, localEnd);
     }
 }

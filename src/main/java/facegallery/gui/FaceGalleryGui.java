@@ -27,7 +27,6 @@ public class FaceGalleryGui extends JFrame {
     static private JPanel controlPanel = new JPanel();
     static private ImageBytesReader files = new ImageBytesReader(TEST_DATASET_DIR);
     static int currentMode = 0;
-    boolean batchFaceDetect = true;
     AtomicBoolean running = new AtomicBoolean(false);
 
     static Dimension d;
@@ -287,7 +286,6 @@ public class FaceGalleryGui extends JFrame {
         thumbBar.setValue(stats.thumbnailGenerateStats.taskProgress);
         distortBar.setValue(stats.imageRescaleStats.taskProgress);
         setProgressBarMax(stats.fileReadStats.taskTotal);
-        System.out.println(stats.fileReadStats.taskTotal);
         return null;
     }
 

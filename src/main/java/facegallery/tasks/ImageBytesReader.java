@@ -66,6 +66,8 @@ public class ImageBytesReader {
 
         AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, imageBytes.length, 8);
 
+        System.out.println("REEEEEEEEEEEEE: " + imageBytes.length);
+
         @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 8, reduction = "AND")
         Boolean sync = asyncWorker(scheduler, readyQueue);
 
