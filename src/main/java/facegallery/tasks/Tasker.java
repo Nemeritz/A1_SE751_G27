@@ -51,13 +51,9 @@ public class Tasker {
         stats.thumbnailGenerateStats.taskTotal = imageBytes.length;
         stats.lastAction = TaskerStats.LastAction.THUMBNAIL;
 
-        Void gs0 = statsUpdater.apply(stats);
-
         // Start the timer and start the 'Thumbnail Generate' task
         timer.startTiming();
         thumbnailGenerator.run();
-
-        Void gs1 = imagesUpdater.apply(new CopyOnWriteArrayList<>(thumbnails));
 
         // Finalise stats and prepare for next task
         stats.thumbnailGenerateStats.taskProgress = stats.thumbnailGenerateStats.taskTotal;
@@ -66,8 +62,6 @@ public class Tasker {
         stats.thumbnailGenerateStats.runtime = timer.getTime();
         stats.faceDetectionStats.taskTotal = imageBytes.length;
         stats.lastAction = TaskerStats.LastAction.FACE_DETECT;
-
-        Void gs2 = statsUpdater.apply(stats);
 
         // Start the timer and start the 'Face Detection' task
         timer.startTiming();
@@ -81,8 +75,6 @@ public class Tasker {
         stats.imageRescaleStats.taskTotal = hasFace.length;
         stats.lastAction = TaskerStats.LastAction.RESCALE;
 
-        Void gs3 = statsUpdater.apply(stats);
-
         // Start the timer and start the 'Image Rescale' task
         timer.startTiming();
         imageRescaler.run();
@@ -94,13 +86,11 @@ public class Tasker {
         stats.imageRescaleStats.runtime = timer.getTime();
         stats.lastAction = TaskerStats.LastAction.IDLE;
 
-        Void gs4 = statsUpdater.apply(stats);
-
-        Void gs5 = imagesUpdater.apply(new CopyOnWriteArrayList<>(rescaled));
-
         // All done, check time
         totalTimer.stopTiming();
         stats.totalRuntime = totalTimer.getTime();
+
+        Void gs5 = imagesUpdater.apply(new CopyOnWriteArrayList<>(rescaled));
 
         Void gs6 = statsUpdater.apply(stats);
 
@@ -139,15 +129,16 @@ public class Tasker {
 
         // Update the gui with each read for stats
         for (int i = 0; i < imageBytes.length; i++) {
-            stats.fileReadStats.taskProgress++;
-            @Gui
-            Void gs1 = statsUpdater.apply(new TaskerStats(stats));
-
             try {
                 readyQueue.take();
             } catch (InterruptedException e) {
                 e.printStackTrace(System.err);
             }
+
+            stats.fileReadStats.taskProgress++;
+
+            @Gui
+            Void gs1 = statsUpdater.apply(new TaskerStats(stats));
         }
 
         // Finalise stats and prepare for next task
@@ -165,15 +156,16 @@ public class Tasker {
         Object s1 = thumbnailGenerator.run(readyQueue);
 
         for (int i = 0; i < imageBytes.length; i++) {
-            stats.thumbnailGenerateStats.taskProgress++;
-            @Gui
-            Void gs3 = statsUpdater.apply(new TaskerStats(stats));
-
             try {
                 readyQueue.take();
             } catch (InterruptedException e) {
                 e.printStackTrace(System.err);
             }
+
+            stats.thumbnailGenerateStats.taskProgress++;
+
+            @Gui
+            Void gs3 = statsUpdater.apply(new TaskerStats(stats));
 
             @Gui
             Void gs4 = imagesUpdater.apply(new CopyOnWriteArrayList<>(thumbnails));
@@ -194,15 +186,16 @@ public class Tasker {
         Object s3 = faceDetector.run(batchFaceDetect, readyQueue);
 
         for (int i = 0; i < imageBytes.length; i++) {
-            stats.faceDetectionStats.taskProgress++;
-            @Gui
-            Void gs6 = statsUpdater.apply(new TaskerStats(stats));
-
             try {
                 readyQueue.take();
             } catch (InterruptedException e) {
                 e.printStackTrace(System.err);
             }
+
+            stats.faceDetectionStats.taskProgress++;
+
+            @Gui
+            Void gs6 = statsUpdater.apply(new TaskerStats(stats));
         }
 
         // Finalise stats and prepare for next task
@@ -220,15 +213,15 @@ public class Tasker {
         Object s4 = imageRescaler.run(readyQueue);
 
         for (int i = 0; i < imageBytes.length; i++) {
-            stats.imageRescaleStats.taskProgress++;
-            @Gui
-            Void gs8 = statsUpdater.apply(new TaskerStats(stats));
-
             try {
                 readyQueue.take();
             } catch (InterruptedException e) {
                 e.printStackTrace(System.err);
             }
+
+            stats.imageRescaleStats.taskProgress++;
+            @Gui
+            Void gs8 = statsUpdater.apply(new TaskerStats(stats));
 
             @Gui
             Void gs9 = imagesUpdater.apply(new CopyOnWriteArrayList<>(rescaled));

@@ -6,7 +6,6 @@ import apt.annotations.TaskInfoType;
 import facegallery.utils.AsyncLoopRange;
 import facegallery.utils.AsyncLoopScheduler;
 import facegallery.utils.ByteArray;
-import pu.loopScheduler.ThreadID;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -104,9 +103,7 @@ public class ThumbnailGenerator {
     private Boolean asyncWorker(AsyncLoopScheduler scheduler, BlockingQueue<Integer> readyQueue) {
         AsyncLoopRange range = scheduler.requestLoopRange();
 
-        System.out.printf("Thread %d: %d to %d%n", ThreadID.getStaticID(), range.loopStart, range.loopEnd);
         for (int i = range.loopStart; i < range.loopEnd; i += 1) {
-            System.out.println("working " + i);
             resized[i] = resize(imageBytes[i]);
             readyQueue.offer(i);
         }

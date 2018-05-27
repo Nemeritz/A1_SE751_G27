@@ -14,8 +14,7 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static facegallery.FaceGallery.TEST_DATASET_DIR;
 
@@ -28,6 +27,8 @@ public class FaceGalleryGui extends JFrame {
     static private JPanel controlPanel = new JPanel();
     static private ImageBytesReader files = new ImageBytesReader(TEST_DATASET_DIR);
     static int currentMode = 0;
+    boolean batchFaceDetect = true;
+    AtomicBoolean running = new AtomicBoolean(false);
 
     static Dimension d;
     static int currentWidth, currentHeight;
@@ -54,8 +55,11 @@ public class FaceGalleryGui extends JFrame {
     static JLabel currentAction;
     static JProgressBar progressBar, filesBar, thumbBar, detectBar, distortBar;
     static BufferedImage loadingImage;
-    static Lock delayLock = new ReentrantLock();
 
+    private Void setRunning(boolean val) {
+        running.set(val);
+        return null;
+    }
 
     public static void main(String args[]) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -68,45 +72,69 @@ public class FaceGalleryGui extends JFrame {
     private class parallelListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            currentMode = 3;
-            ParallelTasker tasker = new ParallelTasker();
+            if (!running.get()) {
+                setRunning(true);
 
-            @Future
-            Void t = tasker.performParallel(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages);
+                currentMode = 3;
+                ParallelTasker tasker = new ParallelTasker();
+
+                @Future
+                Void t = tasker.performParallel(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages);
+
+                @Future(depends="t")
+                Void r = setRunning(false);
+            }
         }
     }
 
     private class sequentialListener implements ActionListener{
         @Override
         public void actionPerformed(ActionEvent e) {
-            currentMode = 1;
-            Tasker tasker = new Tasker();
-            Void t0 = tasker.performSequential(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages, false);
+            if (!running.get()) {
+                setRunning(true);
+
+                currentMode = 1;
+                Tasker tasker = new Tasker();
+                Void t = tasker.performSequential(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages, batchFaceDetect);
+
+                setRunning(false);
+            }
         }
     }
 
     private class concurrentListener implements ActionListener{
         @Override
         public void actionPerformed(ActionEvent e) {
-            currentMode = 2;
-            Tasker tasker = new Tasker();
+            if (!running.get()) {
+                setRunning(true);
 
-            @Future
-            Void t1 = tasker.performConcurrent(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages, false);
+                currentMode = 2;
+                Tasker tasker = new Tasker();
+
+                @Future
+                Void t = tasker.performConcurrent(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages, batchFaceDetect);
+
+                @Future(depends="t")
+                Void r = setRunning(false);
+            }
         }
     }
 
     private class resetListener implements ActionListener{
         @Override
         public void actionPerformed(ActionEvent e) {
-            imageGrid.removeAll();
-            imageGrid.revalidate();
-            imageGrid.repaint();
-            progressBar.setValue(0);
-            filesBar.setValue(0);
-            thumbBar.setValue(0);
-            distortBar.setValue(0);
-            detectBar.setValue(0);
+            if (!running.get()) {
+                setRunning(true);
+                imageGrid.removeAll();
+                imageGrid.revalidate();
+                imageGrid.repaint();
+                progressBar.setValue(0);
+                filesBar.setValue(0);
+                thumbBar.setValue(0);
+                distortBar.setValue(0);
+                detectBar.setValue(0);
+                setRunning(false);
+            }
         }
     }
 

@@ -57,15 +57,15 @@ public class ParallelTasker {
 
         // Update the gui with each read for stats
         for (int i = 0; i < imageBytes.length; i++) {
-            stats.fileReadStats.taskProgress++;
-            @Gui
-            Void gs1 = statsUpdater.apply(new TaskerStats(stats));
-
             try {
                 readyQueue.take();
             } catch (InterruptedException e) {
                 e.printStackTrace(System.err);
             }
+
+            stats.fileReadStats.taskProgress++;
+            @Gui
+            Void gs1 = statsUpdater.apply(new TaskerStats(stats));
         }
 
         // Finalise stats and prepare for next task
@@ -96,15 +96,15 @@ public class ParallelTasker {
         BlockingQueue<Integer> readyQueue = thumbnailGenerator.runAsync();
 
         for (int i = 0; i < imageBytes.length; i++) {
-            stats.thumbnailGenerateStats.taskProgress++;
-            @Gui
-            Void gs3 = statsUpdater.apply(new TaskerStats(stats));
-
             try {
                 readyQueue.take();
             } catch (InterruptedException e) {
                 e.printStackTrace(System.err);
             }
+
+            stats.thumbnailGenerateStats.taskProgress++;
+            @Gui
+            Void gs3 = statsUpdater.apply(new TaskerStats(stats));
 
             @Gui
             Void gs4 = imagesUpdater.apply(new CopyOnWriteArrayList<>(thumbnails));
@@ -136,15 +136,15 @@ public class ParallelTasker {
         BlockingQueue<Integer> readyQueue = faceDetector.runAsync();
 
         for (int i = 0; i < imageBytes.length; i++) {
-            stats.faceDetectionStats.taskProgress++;
-            @Gui
-            Void gs6 = statsUpdater.apply(new TaskerStats(stats));
-
             try {
                 readyQueue.take();
             } catch (InterruptedException e) {
                 e.printStackTrace(System.err);
             }
+
+            stats.faceDetectionStats.taskProgress++;
+            @Gui
+            Void gs6 = statsUpdater.apply(new TaskerStats(stats));
         }
 
         // Finalise stats and prepare for next task
@@ -175,15 +175,15 @@ public class ParallelTasker {
         BlockingQueue<Integer> readyQueue = imageRescaler.runAsync();
 
         for (int i = 0; i < thumbnails.length; i++) {
-            stats.imageRescaleStats.taskProgress++;
-            @Gui
-            Void gs8 = statsUpdater.apply(new TaskerStats(stats));
-
             try {
                 readyQueue.take();
             } catch (InterruptedException e) {
                 e.printStackTrace(System.err);
             }
+
+            stats.imageRescaleStats.taskProgress++;
+            @Gui
+            Void gs8 = statsUpdater.apply(new TaskerStats(stats));
 
             @Gui
             Void gs9 = imagesUpdater.apply(new CopyOnWriteArrayList<>(rescaled));
