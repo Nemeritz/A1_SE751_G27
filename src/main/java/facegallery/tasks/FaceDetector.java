@@ -38,9 +38,13 @@ public class FaceDetector {
                 }
             }
         } else {
-            Boolean[] tempDetections = detect(imageBytes);
-            for (int i = 0; i < imageBytes.length; i++) {
-                detections[i] = tempDetections[i];
+            int processed =  0;
+            for (int i = 0; i < (int)Math.ceil((double)imageBytes.length / 16); i++) {
+                Boolean[] tempDetections = detect(Arrays.copyOfRange(imageBytes, i * 16,  Math.min(imageBytes.length, (i + 1) * 16)));
+                for (Boolean detection : tempDetections) {
+                    detections[processed] = detection;
+                    processed++;
+                }
             }
         }
 
