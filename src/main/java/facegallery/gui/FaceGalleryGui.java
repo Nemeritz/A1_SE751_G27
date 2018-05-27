@@ -54,6 +54,7 @@ public class FaceGalleryGui extends JFrame {
     static JLabel labelTotalTime;
     static JLabel currentAction;
     static JProgressBar progressBar, filesBar, thumbBar, detectBar, distortBar;
+    static JCheckBox batchFlag;
     static BufferedImage loadingImage;
 
     private Void setRunning(boolean val) {
@@ -95,7 +96,7 @@ public class FaceGalleryGui extends JFrame {
 
                 currentMode = 1;
                 Tasker tasker = new Tasker();
-                Void t = tasker.performSequential(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages, batchFaceDetect);
+                Void t = tasker.performSequential(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages, batchFlag.isSelected());
 
                 setRunning(false);
             }
@@ -112,7 +113,7 @@ public class FaceGalleryGui extends JFrame {
                 Tasker tasker = new Tasker();
 
                 @Future
-                Void t = tasker.performConcurrent(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages, batchFaceDetect);
+                Void t = tasker.performConcurrent(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages, batchFlag.isSelected());
 
                 @Future(depends="t")
                 Void r = setRunning(false);
@@ -148,6 +149,7 @@ public class FaceGalleryGui extends JFrame {
             System.err.println("Error loading loading image");
         }
 
+        batchFlag = new JCheckBox("Enable Batch");
         progressBar = new JProgressBar(0, files.getFileLength() * 4);
         progressBar.setStringPainted(true);
         filesBar = new JProgressBar(0, files.getFileLength());
@@ -231,6 +233,8 @@ public class FaceGalleryGui extends JFrame {
         controls.add(new JLabel("                "));
         controls.add(new JLabel("                "));
         controls.add(progressBar);
+        controls.add(new JLabel("                "));
+        controls.add(batchFlag);
         controlPanel.add(controls,BorderLayout.SOUTH);
         scrollPane.add(imageGrid);
 
@@ -282,6 +286,8 @@ public class FaceGalleryGui extends JFrame {
         filesBar.setValue(stats.fileReadStats.taskProgress);
         thumbBar.setValue(stats.thumbnailGenerateStats.taskProgress);
         distortBar.setValue(stats.imageRescaleStats.taskProgress);
+        setProgressBarMax(stats.fileReadStats.taskTotal);
+        System.out.println(stats.fileReadStats.taskTotal);
         return null;
     }
 
@@ -295,5 +301,13 @@ public class FaceGalleryGui extends JFrame {
         }
 
         return null;
+    }
+
+    private static void setProgressBarMax(int total) {
+        progressBar.setMaximum(total * 4);
+        filesBar.setMaximum(total);
+        detectBar.setMaximum(total);
+        distortBar.setMaximum(total);
+        thumbBar.setMaximum(total);
     }
 }
