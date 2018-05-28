@@ -114,8 +114,8 @@ public class ParallelPipelineTasker {
             @Gui
             Void gs3 = statsUpdater.apply(new TaskerStats(stats));
 
-            @Gui
-            Void gs4 = imagesUpdater.apply(new CopyOnWriteArrayList<>(thumbnails));
+//            @Gui
+//            Void gs4 = imagesUpdater.apply(new CopyOnWriteArrayList<>(thumbnails));
         }
 
         // Finalise stats and prepare for next task
@@ -186,15 +186,15 @@ public class ParallelPipelineTasker {
         Void t = imageRescaler.runAsyncPipeline(thumbnailGenerateOutput, faceDetectOutput, readyQueue);
 
         for (int i = 0; i < thumbnails.length; i++) {
-            stats.imageRescaleStats.taskProgress++;
-            @Gui
-            Void gs8 = statsUpdater.apply(new TaskerStats(stats));
-
             try {
                 readyQueue.take();
             } catch (InterruptedException e) {
                 e.printStackTrace(System.err);
             }
+
+            stats.imageRescaleStats.taskProgress++;
+            @Gui
+            Void gs8 = statsUpdater.apply(new TaskerStats(stats));
 
             @Gui
             Void gs9 = imagesUpdater.apply(new CopyOnWriteArrayList<>(rescaled));

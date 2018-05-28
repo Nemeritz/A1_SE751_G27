@@ -139,3 +139,6 @@ compilePtRuntimeJava.mustRunAfter guiProcessor
 //     from sourceSets.ptRuntime.output
 // }
 
+tasks.withType(JavaExec) {
+    jvmArgs = ['-Xms2048m', '-Xmx2048m']
+}

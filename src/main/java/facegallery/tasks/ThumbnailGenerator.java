@@ -6,9 +6,9 @@ import apt.annotations.TaskInfoType;
 import facegallery.utils.AsyncLoopRange;
 import facegallery.utils.AsyncLoopScheduler;
 import facegallery.utils.ByteArray;
-import org.imgscalr.Scalr;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -140,23 +140,23 @@ public class ThumbnailGenerator {
 
         if (inputImage != null) {
 
-//            double aspectRatio = (double)inputImage.getWidth(null)/(double) inputImage.getHeight(null);
-//            int targetHeight = (int)(targetWidth / aspectRatio);
-//
-//            BufferedImage bufferedImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
-//            Graphics2D graphics2D = bufferedImage.createGraphics();
-//            graphics2D.setComposite(AlphaComposite.Src);
-//
-//            //below three lines are for RenderingHints for better image quality at cost of higher processing time
-//            graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-//            graphics2D.setRenderingHint(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY);
-//            graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-//
-//            graphics2D.drawImage(inputImage, 0, 0, targetWidth, targetHeight, null);
-//            graphics2D.dispose();
+            double aspectRatio = (double)inputImage.getWidth(null)/(double) inputImage.getHeight(null);
+            int targetHeight = (int)(targetWidth / aspectRatio);
 
-//            return bufferedImage;
-            return Scalr.resize(inputImage, Scalr.Method.QUALITY, targetWidth);
+            BufferedImage bufferedImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphics2D = bufferedImage.createGraphics();
+            graphics2D.setComposite(AlphaComposite.Src);
+
+            //below three lines are for RenderingHints for better image quality at cost of higher processing time
+            graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            graphics2D.setRenderingHint(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY);
+            graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+
+            graphics2D.drawImage(inputImage, 0, 0, targetWidth, targetHeight, null);
+            graphics2D.dispose();
+
+            return bufferedImage;
+//            return Scalr.resize(inputImage, Scalr.Method.QUALITY, targetWidth);
         }
 
         return null;
