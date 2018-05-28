@@ -30,8 +30,10 @@ e.g Users/Chris/Desktop/secrets.json
 
 **Troubleshooting**
 
-If the application gets does not progress for the thumbnail generation and the darkening & blurring then try to restart the application. If restarting the application does not work then try to change the amount of Images in the dataset.
+- If the application gets does not progress for the thumbnail generation and the darkening & blurring then try to restart the application. If restarting the application does not work then try to change the amount of Images in the dataset.
 
 **Caution**
 
-Do not try to edit the dataset folder while the progress bars have not reached 100% as that will break the application.
+- Do **not** try to edit the dataset folder while the progress bars have not reached 100% as that will break the application. 
+- Google API only allows max **600** requests per minute so try to keep the dataset below 100.
+- Make sure all images you use are valid images i.e. not corrupted.
