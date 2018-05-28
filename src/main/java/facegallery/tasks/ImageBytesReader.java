@@ -64,27 +64,27 @@ public class ImageBytesReader {
     public BlockingQueue<Integer> runAsync() {
         BlockingQueue<Integer> readyQueue = new LinkedBlockingQueue<>();
 
-        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, imageBytes.length, 32);
+        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, imageBytes.length, 8);
 
-        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 32, reduction = "AND")
+        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 8, reduction = "AND")
         Boolean sync = asyncWorker(scheduler, readyQueue);
 
         return readyQueue;
     }
 
     public Void runAsync(BlockingQueue<Integer> readyQueue) {
-        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, imageBytes.length, 32);
+        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, imageBytes.length, 8);
 
-        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 32, reduction = "AND")
+        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 8, reduction = "AND")
         Boolean sync = asyncWorker(scheduler, readyQueue);
 
         return null;
     }
 
     public Boolean runAsync(Void wait) {
-        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, imageBytes.length, 32);
+        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, imageBytes.length, 8);
 
-        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 32, reduction = "AND")
+        @Future(taskType = TaskInfoType.MULTI_IO, taskCount = 8, reduction = "AND")
         Boolean sync = asyncWorker(scheduler);
 
         return sync;
