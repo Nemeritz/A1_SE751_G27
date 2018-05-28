@@ -246,6 +246,7 @@ public class FaceGalleryGui extends JFrame {
         controls.add(timeParallelTotal);
         controls.add(timePipelineTotal);
 //        controls.add(currentAction);
+        controls.add(new JLabel("  "));
         controls.add(sequential);
         controls.add(concurrent);
         controls.add(parallel);
@@ -254,16 +255,15 @@ public class FaceGalleryGui extends JFrame {
         controls.add(new JLabel("Thumbnail Progress: "));
         controls.add(new JLabel("Detection Progress: "));
         controls.add(new JLabel("Blur & Darken Progress: "));
+        controls.add(new JLabel("Total Progress: "));        
         controls.add(filesBar);
         controls.add(thumbBar);
         controls.add(detectBar);
         controls.add(distortBar);
-        controls.add(new JLabel("Total Progress: "));
+        controls.add(progressBar);   
         controls.add(new JLabel("                "));
         controls.add(new JLabel("                "));
         controls.add(new JLabel("                "));
-        controls.add(new JLabel("                "));
-        controls.add(progressBar);
         controls.add(new JLabel("                "));
         controls.add(batchFlag);
         controlPanel.add(controls,BorderLayout.SOUTH);
@@ -274,7 +274,7 @@ public class FaceGalleryGui extends JFrame {
         add(scrollPane);
         add(controlPanel);
 
-        setSize(1380, 720);
+        setSize(1880, 720);
         d = getSize();
         currentWidth = d.width;
         currentHeight = d.height;
