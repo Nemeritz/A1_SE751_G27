@@ -117,7 +117,6 @@ public class ThumbnailGenerator {
 
         for (int i = range.loopStart; i < range.loopEnd; i += 1) {
             try {
-                System.out.println("Processing " + Integer.toString(i));
                 Integer nextIndex = inputReady.take();
                 resized[nextIndex] = resize(imageBytes[nextIndex]);
                 outputReady.offer(nextIndex);
