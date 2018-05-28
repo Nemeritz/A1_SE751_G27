@@ -22,7 +22,7 @@ public class FaceGalleryGui extends JFrame {
 
     static private ScrollPane scrollPane = new ScrollPane();
     static private JPanel imageGrid = new JPanel();
-    static private JButton parallel,sequential,concurrent,reset;
+    static private JButton parallel,sequential,concurrent,pipeline;
     static private JPanel controls = new JPanel();
     static private JPanel controlPanel = new JPanel();
     static private ImageBytesReader files = new ImageBytesReader(TEST_DATASET_DIR);
@@ -36,18 +36,23 @@ public class FaceGalleryGui extends JFrame {
     static JLabel timeParallelFiles;
     static JLabel timeSequentialFiles;
     static JLabel timeConcurrentFiles;
+    static JLabel timePipelineFiles;
     static JLabel timeParallelThumb;
+    static JLabel timePipelineThumb;
     static JLabel timeSequentialThumb;
     static JLabel timeConcurrentThumb;
     static JLabel timeParallelDetect;
     static JLabel timeSequentialDetect;
     static JLabel timeConcurrentDetect;
+    static JLabel timePipelineDetect;
     static JLabel timeParallelDistort;
     static JLabel timeSequentialDistort;
     static JLabel timeConcurrentDistort;
+    static JLabel timePipelineDistort;
     static JLabel timeParallelTotal;
     static JLabel timeSequentialTotal;
     static JLabel timeConcurrentTotal;
+    static JLabel timePipelineTotal;
     static JLabel labelTextThumb;
     static JLabel labelTextBlur;
     static JLabel labelTotalTime;
@@ -120,23 +125,41 @@ public class FaceGalleryGui extends JFrame {
         }
     }
 
-    private class resetListener implements ActionListener{
+    private class pipelineListener implements ActionListener{
         @Override
         public void actionPerformed(ActionEvent e) {
             if (!running.get()) {
                 setRunning(true);
-                imageGrid.removeAll();
-                imageGrid.revalidate();
-                imageGrid.repaint();
-                progressBar.setValue(0);
-                filesBar.setValue(0);
-                thumbBar.setValue(0);
-                distortBar.setValue(0);
-                detectBar.setValue(0);
-                setRunning(false);
+
+                currentMode = 3;
+                Tasker tasker = new Tasker();
+
+                @Future
+                Void t = tasker.performConcurrent(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages, batchFlag.isSelected());
+
+                @Future(depends="t")
+                Void r = setRunning(false);
             }
         }
     }
+
+//    private class resetListener implements ActionListener{
+//        @Override
+//        public void actionPerformed(ActionEvent e) {
+//            if (!running.get()) {
+//                setRunning(true);
+//                imageGrid.removeAll();
+//                imageGrid.revalidate();
+//                imageGrid.repaint();
+//                progressBar.setValue(0);
+//                filesBar.setValue(0);
+//                thumbBar.setValue(0);
+//                distortBar.setValue(0);
+//                detectBar.setValue(0);
+//                setRunning(false);
+//            }
+//        }
+//    }
 
     public FaceGalleryGui() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -176,58 +199,65 @@ public class FaceGalleryGui extends JFrame {
         timeParallelTotal = new JLabel("  ");
         timeSequentialTotal = new JLabel("  ");
         timeConcurrentTotal = new JLabel("  ");
-        labelTextThumb = new JLabel("Thumbnail Generation :");
-        labelTextBlur = new JLabel("Thumbnail Distortion :");
+        labelTextThumb = new JLabel("Thumbnail:");
+        labelTextBlur = new JLabel("Blur & Darken:");
         labelTotalTime = new JLabel("Total time:");
         currentAction = new JLabel("");
         imageGrid.setLayout(new GridLayout(0,4,5,5));
         sequential = new JButton("sequential");
         concurrent = new JButton("concurrent");
         parallel = new JButton("parallel");
-        reset = new JButton("reset");
+        pipeline = new JButton("pipeline");
         parallel.addActionListener(new parallelListener());
         sequential.addActionListener(new sequentialListener());
         concurrent.addActionListener(new concurrentListener());
-        reset.addActionListener(new resetListener());
-        controls.setLayout(new GridLayout(0,4,5,5));
+        pipeline.addActionListener(new pipelineListener());
+        controls.setLayout(new GridLayout(0,5,5,5));
         controls.add(new JLabel("         "));
         controls.add(new JLabel("Sequential:"));
         controls.add(new JLabel("Concurrent:"));
         controls.add(new JLabel("Parallel:"));
+        controls.add(new JLabel("Pipeline:"));
         controls.add(labelTextImages);
         controls.add(timeSequentialFiles);
         controls.add(timeConcurrentFiles);
         controls.add(timeParallelFiles);
+        controls.add(timePipelineFiles);
         controls.add(labelTextThumb);
         controls.add(timeSequentialThumb);
         controls.add(timeConcurrentThumb);
         controls.add(timeParallelThumb);
+        controls.add(timePipelineThumb);
         controls.add(labelTextFaces);
         controls.add(timeSequentialDetect);
         controls.add(timeConcurrentDetect);
         controls.add(timeParallelDetect);
+        controls.add(timePipelineDetect);
         controls.add(labelTextBlur);
         controls.add(timeSequentialDistort);
         controls.add(timeConcurrentDistort);
         controls.add(timeParallelDistort);
+        controls.add(timePipelineDistort);
         controls.add(labelTotalTime);
         controls.add(timeSequentialTotal);
         controls.add(timeConcurrentTotal);
         controls.add(timeParallelTotal);
+        controls.add(timePipelineTotal);
 //        controls.add(currentAction);
         controls.add(sequential);
         controls.add(concurrent);
         controls.add(parallel);
-        controls.add(reset);
+        controls.add(pipeline);
         controls.add(new JLabel("File Progress: "));
         controls.add(new JLabel("Thumbnail Progress: "));
         controls.add(new JLabel("Detection Progress: "));
-        controls.add(new JLabel("Distortion Progress: "));
+        controls.add(new JLabel("Blur & Darken Progress: "));
         controls.add(filesBar);
         controls.add(thumbBar);
         controls.add(detectBar);
         controls.add(distortBar);
         controls.add(new JLabel("Total Progress: "));
+        controls.add(new JLabel("                "));
         controls.add(new JLabel("                "));
         controls.add(new JLabel("                "));
         controls.add(new JLabel("                "));
@@ -278,6 +308,11 @@ public class FaceGalleryGui extends JFrame {
                 timeParallelTotal.setText(Double.toString(stats.totalRuntime));
                 break;
             case 4:
+                timePipelineFiles.setText(Double.toString(stats.fileReadStats.runtime));
+                timePipelineThumb.setText(Double.toString(stats.thumbnailGenerateStats.runtime));
+                timePipelineDetect.setText(Double.toString(stats.faceDetectionStats.runtime));
+                timePipelineDistort.setText(Double.toString(stats.imageRescaleStats.runtime));
+                timePipelineTotal.setText(Double.toString(stats.totalRuntime));
                 break;
         }
         progressBar.setValue(stats.faceDetectionStats.taskProgress + stats.imageRescaleStats.taskProgress + stats.thumbnailGenerateStats.taskProgress + stats.fileReadStats.taskProgress);

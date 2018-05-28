@@ -4,6 +4,7 @@ import apt.annotations.Gui;
 import apt.annotations.InitParaTask;
 import apt.annotations.TaskScheduingPolicy;
 import facegallery.gui.FaceGalleryGui;
+import facegallery.tasks.ParallelPipelineTasker;
 import facegallery.tasks.ParallelTasker;
 import facegallery.tasks.Tasker;
 import facegallery.tasks.TaskerStats;
@@ -105,7 +106,8 @@ public class FaceGallery {
     }
 
     public static void runParallelPipeline() {
-
+        ParallelPipelineTasker tasker = new ParallelPipelineTasker();
+        tasker.performParallel(FaceGallery::statsPrinter, FaceGallery::imagePrinter);
     }
 
     public static void runGui() {

@@ -11,6 +11,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ImageRescaler {
     private BufferedImage[] images;
@@ -81,11 +82,25 @@ public class ImageRescaler {
         return sync;
     }
 
-    public void runAsyncPipeline(BlockingQueue<Integer> inputReady, BlockingQueue<Integer> readyQueue) {
+    public Void runAsyncPipeline(BlockingQueue<Integer> thumbnailReady, BlockingQueue<Integer> faceDetectReady, BlockingQueue<Integer> readyQueue) {
+        AtomicBoolean[] sync = new AtomicBoolean[images.length];
+        for (int i = 0; i < images.length; i++) {
+            sync[i] = new AtomicBoolean(false);
+        }
+
         AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, images.length, 8);
 
+        BlockingQueue<Integer> inputReady = new LinkedBlockingQueue<>();
+        @Future
+        Boolean s1 = asyncPipelineSynch(thumbnailReady, sync, inputReady);
+
+        @Future
+        Boolean s2 = asyncPipelineSynch(faceDetectReady, sync, inputReady);
+
         @Future(taskType = TaskInfoType.MULTI, taskCount = 8, reduction = "AND")
-        Boolean sync = asyncPipelineWorker(scheduler, inputReady, readyQueue);
+        Boolean s3 = asyncPipelineWorker(scheduler, inputReady, readyQueue);
+
+        return null;
     }
 
     @Task
@@ -118,6 +133,22 @@ public class ImageRescaler {
                 Integer nextIndex = inputReady.take();
                 rescaled[nextIndex] = rescale(images[nextIndex], hasFace[nextIndex]);
                 outputReady.offer(nextIndex);
+            } catch (InterruptedException e) {
+                e.printStackTrace(System.err);
+            }
+        }
+
+        return true;
+    }
+
+    @Task
+    private Boolean asyncPipelineSynch(BlockingQueue<Integer> inputQueue, AtomicBoolean[] sync, BlockingQueue<Integer> readyQueue) {
+        for (int i = 0; i < images.length; i++) {
+            try {
+                Integer iDone = inputQueue.take();
+                if (!sync[iDone].compareAndSet(false, true)) {
+                    readyQueue.offer(iDone);
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace(System.err);
             }
