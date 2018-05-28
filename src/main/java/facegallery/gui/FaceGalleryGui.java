@@ -1,10 +1,7 @@
 package facegallery.gui;
 
 import apt.annotations.Future;
-import facegallery.tasks.ImageBytesReader;
-import facegallery.tasks.ParallelTasker;
-import facegallery.tasks.Tasker;
-import facegallery.tasks.TaskerStats;
+import facegallery.tasks.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -131,11 +128,11 @@ public class FaceGalleryGui extends JFrame {
             if (!running.get()) {
                 setRunning(true);
 
-                currentMode = 3;
-                Tasker tasker = new Tasker();
+                currentMode = 4;
+                ParallelPipelineTasker tasker = new ParallelPipelineTasker();
 
                 @Future
-                Void t = tasker.performConcurrent(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages, batchFlag.isSelected());
+                Void t = tasker.performParallel(FaceGalleryGui::updateStats, FaceGalleryGui::updateImages);
 
                 @Future(depends="t")
                 Void r = setRunning(false);
