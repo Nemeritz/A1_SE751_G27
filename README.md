@@ -12,17 +12,17 @@ https://github.com/Nemeritz/A1_SE751_G27/releases
 
 4. Make sure the dataset folder is named "Dataset".
 
-5. Set environmental variable FACEGALLERY_DATASET to your Test file path **without** the trailing slash.
+5. change to root directory of project.
+
+6. Set environmental variable FACEGALLERY_DATASET to your Test file path **without** the trailing slash.
 e.g. Users/Chris/Desktop
 
-6. Follow instructions from the following link to get a json file for google API:
+7. Follow instructions from the following link to get a json file for google API:
 
 https://cloud.google.com/genomics/downloading-credentials-for-api-access
 
-7. Set environmental variable GOOGLE_APPLICATION_CREDENTIALS to your downloaded json file.
+8. Set environmental variable GOOGLE_APPLICATION_CREDENTIALS to your downloaded json file.
 e.g Users/Chris/Desktop/secrets.json
-
-8. go to root directory of project.
 
 9. gradle run
 
