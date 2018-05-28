@@ -16,7 +16,7 @@ import java.util.Scanner;
 
 public class FaceGallery {
     public static final String DATASET_DIR = System.getenv("FACEGALLERY_DATASET");
-    public static final String TEST_DATASET_DIR = DATASET_DIR + "/Test";
+    public static final String TEST_DATASET_DIR = DATASET_DIR + "/dataset";
     public static final int PROCESSORS = Runtime.getRuntime().availableProcessors();
 
     @InitParaTask(numberOfThreads = 32, schedulingPolicy = TaskScheduingPolicy.MixedSchedule)
