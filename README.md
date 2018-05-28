@@ -26,6 +26,8 @@ e.g Users/Chris/Desktop/secrets.json
 
 9. gradle run
 
+10. Press 5 to run GUI
+
 **Troubleshooting**
 
 If the application gets does not progress for the thumbnail generation and the darkening & blurring then try to restart the application. If restarting the application does not work then try to change the amount of Images in the dataset.
