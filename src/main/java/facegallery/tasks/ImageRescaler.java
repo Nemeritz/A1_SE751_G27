@@ -65,18 +65,18 @@ public class ImageRescaler {
     public BlockingQueue<Integer> runAsync() {
         BlockingQueue<Integer> readyQueue = new LinkedBlockingQueue<>();
 
-        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, images.length, 8);
+        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, images.length, 32);
 
-        @Future(taskType = TaskInfoType.MULTI, taskCount = 8, reduction = "AND")
+        @Future(taskType = TaskInfoType.MULTI, taskCount = 32, reduction = "AND")
         Boolean sync = asyncWorker(scheduler, readyQueue);
 
         return readyQueue;
     }
 
     public Boolean runAsync(Void wait) {
-        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, images.length, 8);
+        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, images.length, 32);
 
-        @Future(taskType = TaskInfoType.MULTI, taskCount = 8, reduction = "AND")
+        @Future(taskType = TaskInfoType.MULTI, taskCount = 32, reduction = "AND")
         Boolean sync = asyncWorker(scheduler);
 
         return sync;
@@ -88,7 +88,7 @@ public class ImageRescaler {
             sync[i] = new AtomicBoolean(false);
         }
 
-        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, images.length, 8);
+        AsyncLoopScheduler scheduler = new AsyncLoopScheduler(0, images.length, 32);
 
         BlockingQueue<Integer> inputReady = new LinkedBlockingQueue<>();
         @Future
@@ -97,7 +97,7 @@ public class ImageRescaler {
         @Future
         Boolean s2 = asyncPipelineSynch(faceDetectReady, sync, inputReady);
 
-        @Future(taskType = TaskInfoType.MULTI, taskCount = 8, reduction = "AND")
+        @Future(taskType = TaskInfoType.MULTI, taskCount = 32, reduction = "AND")
         Boolean s3 = asyncPipelineWorker(scheduler, inputReady, readyQueue);
 
         return null;
