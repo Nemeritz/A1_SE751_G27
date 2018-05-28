@@ -10,7 +10,7 @@ https://github.com/Nemeritz/A1_SE751_G27/releases
 
 3. unzip.
 
-4. Make sure the dataset folder is named "dataset".
+4. Make sure the dataset folder is named "Dataset".
 
 5. Set environmental variable FACEGALLERY_DATASET to your Test file path **without** the trailing slash.
 e.g. Users/Chris/Desktop
