@@ -5,6 +5,7 @@ A gallery app to filter out non-face pictures.
 1. Clone Repository
 
 2. Download  dataset.tar.bz2 file from this link skip to step 4 if you have a dataset already:
+
 https://github.com/Nemeritz/A1_SE751_G27/releases 
 
 3. unzip.
@@ -15,6 +16,7 @@ https://github.com/Nemeritz/A1_SE751_G27/releases
 e.g. Users/Chris/Desktop
 
 6. Follow instructions from the following link to get a json file for google API:
+
 https://cloud.google.com/genomics/downloading-credentials-for-api-access
 
 7. Set environmental variable GOOGLE_APPLICATION_CREDENTIALS to your downloaded json file.
@@ -29,4 +31,5 @@ e.g Users/Chris/Desktop/secrets.json
 If the application gets does not progress for the thumbnail generation and the darkening & blurring then try to restart the application. If restarting the application does not work then try to change the amount of Images in the dataset.
 
 **Caution**
+
 Do not try to edit the dataset folder while the progress bars have not reached 100% as that will break the application.
